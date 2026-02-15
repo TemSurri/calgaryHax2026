@@ -234,6 +234,116 @@ static int ceilingMap2[MAP_H][MAP_W] = {
 {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
+
+
+
+static int worldMapHome[MAP_H][MAP_W] = {
+
+{16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16},
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,17,17,17,17,17,17,17,17,17,17,17,17,16,16,16,16,16,16,0,0,0,16},
+{16,0,17,0,0,0,0,0,0,0,0,17,0,0,0,0,0,0,0,16,0,0,0,16},
+{16,0,17,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,16,0,0,0,16},
+{16,0,17,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,16,0,0,0,16},
+{16,0,17,0,0,0,0,0,0,0,0,17,0,0,0,0,0,0,0,16,0,0,0,16},
+{16,0,17,17,17,17,17,17,17,17,17,17,17,17,16,16,16,16,16,16,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16},
+
+{16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16}
+};
+
+static int floorMapHome[MAP_H][MAP_W] = {
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}
+};
+
+static int ceilMapHome[MAP_H][MAP_W] = {
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}
+};
+
+
+
+static MapData mapBridge = {
+  worldMapHome,
+  floorMapHome,
+  ceilMapHome
+};
+
+
 static MapData map1 = {
   worldMap1,
   floorMap1,
@@ -295,11 +405,15 @@ static Texture texWall13;
 static Texture texWall14;
 static Texture texWall15;
 
+static Texture texWall16;
+
 static Texture texFloor0;
 static Texture texFloor1;
+static Texture texFloor2;
 
 static Texture texCeil0;
 static Texture texCeil1;
+static Texture texCeil2;
 
 static Texture texMenu;
 static Texture texEnemy0;
@@ -352,6 +466,7 @@ Texture texA3; // back-right
 static Texture texEnemy1;
 static Texture texEnemy2;
 
+static Texture texGameOver;
 
 // list of all possible map texture 
 static std::vector<Texture*> floorTextures;
@@ -378,6 +493,7 @@ enum class GameState {
   SCHOOL1,
   SCHOOL2,
   HOME,
+  GAME_OVER 
 };
 
 static GameState gState = GameState::MENU;
@@ -640,7 +756,6 @@ static void loadMap1Sprites() {
   sprites.clear();
 
   sprites = {
-    &enemy0, &enemy1, &enemy2,
 
     &chair, &chair1, &chair2, &chair3,
     &chair4, &chair5, &chair6, &chair7, &chair8,
@@ -657,6 +772,30 @@ static void loadMap1Sprites() {
     &person5,&person6,&person7,&person8,
     &person9,&person10,&person11,&person12
   };
+}
+static void loadHomeSprites() {
+    sprites.clear();
+
+    sprites = {
+
+        // Table center
+        &table1,
+
+        // Chairs around table
+        &chair1,
+        &chair2,
+        &chair3,
+        &chair4,
+
+    };
+
+    table1.x = 4.5;
+    table1.y = 6.0;
+
+    chair1.x = 4.5; chair1.y = 5.3;
+    chair2.x = 4.5; chair2.y = 6.7;
+    chair3.x = 3.8; chair3.y = 6.0;
+    chair4.x = 5.2; chair4.y = 6.0;
 }
 
 static void loadMap2Sprites() {
@@ -727,17 +866,18 @@ static void updateWander(Enemy& e) {
       pickRandomDirection(e);
 }
 
+
 static void updateEnemy(Enemy& enemy) {
   double dx = posX - enemy.x;
   double dy = posY - enemy.y;
   double dist = std::sqrt(dx * dx + dy * dy);
 
   if (dist < 0.4) {
-    // Game over -> back to menu
-    gState = GameState::MENU;
-    stopMusic(); 
+    stopMusic();
+    gState = GameState::GAME_OVER;
     return;
-  }
+}
+
 
   if (dist > 0.001) {
     double nx = enemy.x + (dx / dist) * 0.03;
@@ -1131,17 +1271,24 @@ static void tryInteract(const Uint8* keys) {
 
     case InteractType::TALK_TRANSITION: {
 
-        if (gDialogueActive) {
-            gDialogueActive = false;
-            hidePromptText();
-            gFading = true;   
-            return;
+    if (gDialogueActive) {
+        gDialogueActive = false;
+        hidePromptText();
+
+        if (gState == GameState::HOME) {
+            gNextState = GameState::SCHOOL2;
+        } else {
+            gNextState = GameState::HOME;
         }
 
-        gDialogueActive = true;
-        showPromptText(it.dialogueText);
+        gFading = true;
+        return;
+    }
 
-    } break;
+    gDialogueActive = true;
+    showPromptText(it.dialogueText);
+
+} break;
         
 
    case InteractType::TOGGLE_WALL_TILE: {
@@ -1216,6 +1363,30 @@ static void loadMap2Interactables() {
 
 }
 
+static void initHomeInteractables() {
+    interactables.clear();
+
+    Interactable memory;
+    memory.x = 4.0;
+    memory.y = 4.0;
+    memory.radius = 2.5;
+    memory.type = InteractType::TALK;
+    memory.promptNear = "Press E";
+    memory.dialogueText = 
+        "What a weird dream.\n"
+        "I miss Mrs.Albert, she is great. It's been a few years.\n"
+        "I should go visit her at the school.";
+    interactables.push_back(memory);
+
+    Interactable door;
+    door.x = 10.0;
+    door.y = 4.0;
+    door.radius = 1.5;
+    door.type = InteractType::TALK_TRANSITION;
+    door.promptNear = "Press E to leave";
+    door.dialogueText = "Visit the School?";
+    interactables.push_back(door);
+}
 
 static void drawPromptBar(const std::string& msg) {
   // simple rectangle background (no font needed)
@@ -1489,7 +1660,26 @@ static void renderMenu() {
 
   SDL_RenderPresent(gRenderer);
 }
+static void renderGameOver() {
+  std::fill(gFrame.begin(), gFrame.end(), packARGB(255, 0, 0, 0));
 
+  if (!texGameOver.pixels.empty()) {
+    int startX = (SCREEN_W - texGameOver.w) / 2;
+    int startY = (SCREEN_H - texGameOver.h) / 2;
+
+    for (int y = 0; y < texGameOver.h; y++) {
+      for (int x = 0; x < texGameOver.w; x++) {
+        uint32_t c = texGameOver.pixels[y * texGameOver.w + x];
+        putPixel(startX + x, startY + y, c);
+      }
+    }
+  }
+
+  SDL_UpdateTexture(gScreenTex, nullptr, gFrame.data(), SCREEN_W * sizeof(uint32_t));
+  SDL_RenderClear(gRenderer);
+  SDL_RenderCopy(gRenderer, gScreenTex, nullptr, nullptr);
+  SDL_RenderPresent(gRenderer);
+}
 // ==================================================
 // UPDATE EVERYTHING AKA the STATE MACHINE
 
@@ -1511,7 +1701,7 @@ static void update() {
       enemy1 = { 1.0, 18.0, &texEnemy1, 1};
       enemy2 = { 18.0, 1.0, &texEnemy2, 1 };
 
-      playMusic("audio/music.mp3"); 
+      playMusic("audio/school.mp3"); 
       gState = GameState::PLAYING;
       interactables.clear();
       interactables.clear();
@@ -1529,53 +1719,21 @@ static void update() {
       gFadeIn = false;
       gFadeAlpha = 0.0f;
 
-      sprites = {
-
-        &chair,
-        &chair1,
-        &chair2,
-        &chair3,
-        &chair4,
-        &chair5,
-        &chair6,
-        &chair7,
-        &chair8,
-        &table1,
-        &table2,
-        &table3,
-        // Top left classroom
-    &tl_table1, &tl_chair1,
-    &tl_table2, &tl_chair2,
-    &tl_table3, &tl_chair3,
-    &tl_table4, &tl_chair4,
-
-    // Top right classroom
-    &tr_table1, &tr_chair1,
-    &tr_table2, &tr_chair2,
-    &tr_table3, &tr_chair3,
-    &tr_table4, &tr_chair4,
-
-
-        &person1,
-        &person2,
-        &person3,
-        &person4,
-        &person5,
-        &person6,
-        &person7,
-        &person8,
-        &person9,
-        &person10,
-        &person11,
-        &person12,
-
-    };
-
-
-
+      
+      loadMap1Sprites();
 
     }
     renderMenu();
+    return;
+  }
+
+  if (gState == GameState::GAME_OVER) {
+
+    if (keys[SDL_SCANCODE_RETURN]) {
+        gState = GameState::MENU;
+    }
+
+    renderGameOver();
     return;
   }
 
@@ -1656,19 +1814,40 @@ static void update() {
         gFading = false;
 
         // Load new map
-        loadMap(map2);
-        loadMap2Sprites();
-        loadMap2Interactables();
-        enemy0.speed = 0.5;
-        gGlobalDarkness = 0.55f;
+        if (gNextState == GameState::HOME) {
+            loadMap(mapBridge);
+            sprites.clear();
+            interactables.clear();
+            initHomeInteractables();
+            loadHomeSprites();
+            stopMusic();
+            gState = GameState::HOME;
 
-        posX = 3.0;
-        posY = 3.0;
-        dirX = -1.0;
-        dirY = 0.0;
-        planeX = 0.0;
-        planeY = 0.66;
+            posX = 4.0;
+            posY = 4.0;
+            dirX = 0.0;
+            dirY = 1.0;  
+            planeX = 0.66;
+            planeY = 0.0;
+        }
+        else if (gNextState == GameState::SCHOOL2) {
+            loadMap(map2);
+            loadMap2Sprites();
+            loadMap2Interactables();
+            playMusic("audio/scary.mp3");
+            gState = GameState::SCHOOL2;
+            gGlobalDarkness = 0.55f;
+            enemy0.speed = 0.5;
 
+            posX = 19.5;
+            posY = 3.0;     
+            dirX = 0.0;
+            dirY = 1.0;     
+
+            planeX = 0.66;
+            planeY = 0.0;
+        }
+        
         gFadeHoldTimer = 0.5f;  // stay black for 0.5 seconds
     }
   }
@@ -1774,11 +1953,15 @@ int main() {
   ok &= loadBMPTexture("tex/wall13.png", texWall14);
   ok &= loadBMPTexture("tex/rustdoor.png", texWall15);
 
+   ok &= loadBMPTexture("tex/wall16.png", texWall16);
+
   ok &= loadBMPTexture("tex/floor0.png", texFloor0);
   ok &= loadBMPTexture("tex/floor1.png", texFloor1);
+  ok &= loadBMPTexture("tex/floor2.png", texFloor2);
 
   ok &= loadBMPTexture("tex/ceil0.png", texCeil0);
   ok &= loadBMPTexture("tex/ceil1.png", texCeil1);
+   ok &= loadBMPTexture("tex/ceil2.png", texCeil2);
 
   ok &= loadBMPTexture("tex/E.png", texEnemy0);
 
@@ -1826,6 +2009,8 @@ int main() {
   ok &= loadBMPTexture("tex/A.png",  texA3);
 
 
+  ok &= loadBMPTexture("tex/gameover.png", texGameOver);
+
 
   if (!ok) {
     std::cerr << "Texture load failure\n";
@@ -1833,9 +2018,11 @@ int main() {
 
   floorTextures.push_back(&texFloor0);
   floorTextures.push_back(&texFloor1);
+  floorTextures.push_back(&texFloor2);
   
   ceilTextures.push_back(&texCeil0);
   ceilTextures.push_back(&texCeil1);
+  ceilTextures.push_back(&texCeil2);
 
   wallTextures.push_back(&texWall0);
   wallTextures.push_back(&texWall1);
@@ -1854,6 +2041,7 @@ int main() {
   wallTextures.push_back(&texWall13);
   wallTextures.push_back(&texWall14);
   wallTextures.push_back(&texWall15);
+  wallTextures.push_back(&texWall16);
   
 
 
@@ -1896,21 +2084,10 @@ int main() {
      &person10,
       &person11,
        &person12,
-
     
   };
 
-
   initInteractables();
-
-
-
-
-
-
-
-
-
 
   emscripten_set_main_loop(loop, 0, true);
   EM_ASM({
