@@ -154,6 +154,235 @@ static double dirY =  0.0;
 static double planeX = 0.0;
 static double planeY = 0.66; 
 
+
+// GAME LOGIC
+
+// game states
+enum class GameState {
+  MENU,
+  PLAYING
+};
+
+static GameState gState = GameState::MENU;
+
+// enemy info
+struct Enemy {
+  double x;
+  double y;
+  Texture* sprite; 
+  double heightScale; 
+  std::vector<Texture*> directionalSprites; 
+  int verticalPlaneOffset = 0;
+};
+
+static std::vector<Enemy*> sprites;
+static Texture texEnemy0;
+
+//future angle or direactuonl views for spirtes/enemies
+Texture texC1; // front
+Texture texC2; // front-right
+Texture texC3; // right
+Texture texC4; // back-right
+
+
+static Texture texEnemy1;
+static Texture texEnemy2;
+
+static Enemy enemy0 {  10.5, 12.0, &texEnemy0, 1};
+static Enemy enemy1 {  10.5, 1.0, &texEnemy1, 1};
+static Enemy enemy2 {  1.5, 12.0, &texEnemy2, 1};
+static Enemy chair {  10.5, 16.0, &texC1, 0.4};
+
+static void updateEnemy(Enemy& enemy) {
+  double dx = posX - enemy.x;
+  double dy = posY - enemy.y;
+  double dist = std::sqrt(dx * dx + dy * dy);
+
+  if (dist < 0.4) {
+    // Game over -> back to menu
+    gState = GameState::MENU;
+    stopMusic(); 
+    return;
+  }
+
+  if (dist > 0.001) {
+    enemy.x += (dx / dist) * 0.03;
+    enemy.y += (dy / dist) * 0.03;
+  }
+
+}
+
+static GameState gState = GameState::MENU;
+
+// enemy info
+struct Enemy {
+  double x;
+  double y;
+  Texture* sprite; 
+  double heightScale; 
+  std::vector<Texture*> directionalSprites; 
+  int verticalPlaneOffset = 0;
+};
+
+static std::vector<Enemy*> sprites;
+
+static Enemy enemy0 {  10.5, 12.0, &texEnemy0, 1};
+static Enemy enemy1 {  10.5, 1.0, &texEnemy1, 1};
+static Enemy enemy2 {  1.5, 12.0, &texEnemy2, 1};
+static Enemy chair {  10.5, 16.0, &texC1, 0.4};
+
+static void updateEnemy(Enemy& enemy) {
+  double dx = posX - enemy.x;
+  double dy = posY - enemy.y;
+  double dist = std::sqrt(dx * dx + dy * dy);
+
+  if (dist < 0.4) {
+    // Game over -> back to menu
+    gState = GameState::MENU;
+    stopMusic(); 
+    return;
+  }
+
+  if (dist > 0.001) {
+    enemy.x += (dx / dist) * 0.03;
+    enemy.y += (dy / dist) * 0.03;
+  }
+
+  //std::cerr << enemy.x << " " << enemy.y << std::endl;
+
+}
+
+static bool hasLineOfSight(double x0, double y0, double x1, double y1) {
+  double dx = x1 - x0;
+  double dy = y1 - y0;
+  double dist = std::sqrt(dx * dx + dy * dy);
+
+  if (dist < 0.0001) return true;
+
+  double step = 0.05; // grid precision
+  double vx = dx / dist;
+  double vy = dy / dist;
+
+  for (double t = 0.0; t < dist; t += step) {
+    int mx = int(x0 + vx * t);
+    int my = int(y0 + vy * t);
+
+    if (mx < 0 || mx >= MAP_W || my < 0 || my >= MAP_H)
+      return false;
+
+    if (worldMap[my][mx] > 0)
+      return false; // wall blocks view
+  }
+  return true;
+}
+
+// render enemy 
+static void renderEnemyPlaceholder(const Enemy& enemy) {
+
+  if (!hasLineOfSight(posX, posY, enemy.x, enemy.y))
+    return;
+    
+  // Vector from player to enemy
+  double spriteX = enemy.x - posX;
+  double spriteY = enemy.y - posY;
+
+  // Inverse camera matrix
+  double invDet = 1.0 / (planeX * dirY - dirX * planeY);
+
+  // Transform to camera space
+  double transformX = invDet * (dirY * spriteX - dirX * spriteY);
+  double transformY = invDet * (-planeY * spriteX + planeX * spriteY);
+
+  // Behind camera
+  if (transformY <= 0) return;
+
+  int spriteScreenX = int((SCREEN_W / 2) * (1 + transformX / transformY));
+
+
+  // Angle from chair to player
+  double angle = atan2(posY - enemy.y, posX - enemy.x);
+
+  // Normalize 0 → 2π
+  if (angle < 0) angle += 2 * M_PI;
+
+  // Convert to 8 directions
+  int dirIndex = int((angle / (2 * M_PI)) * 8.0);
+  dirIndex = dirIndex % 8;
+
+  
+  // Ground correction factor
+  int spriteHeight = std::abs(int((SCREEN_H / transformY) * enemy.heightScale));
+
+  int planeY = (SCREEN_H / 2) ; //int(enemy.verticalPlaneOffset
+
+  int drawEndY;
+  int drawStartY;
+  int centerY = SCREEN_H / 2;
+  if (enemy.verticalPlaneOffset == 1) {
+    std::cerr<<"chid";
+    int centerY = SCREEN_H / 2;
+
+    drawStartY = centerY;
+    drawEndY   = drawStartY + spriteHeight;
+    
+  };
+  if (enemy.verticalPlaneOffset == 2){
+
+    int floorY = SCREEN_H / 2; 
+    drawEndY = floorY; 
+    drawStartY = drawEndY - spriteHeight;
+
+  };
+  if (enemy.verticalPlaneOffset == 0) {
+    std::cerr<<"nigg";
+    drawStartY = -spriteHeight / 2 + planeY;
+    drawEndY   =  spriteHeight / 2 + planeY;
+
+  };
+
+  if (drawStartY < 0) drawStartY = 0;
+  if (drawEndY >= SCREEN_H) drawEndY = SCREEN_H - 1;
+
+  // Width
+  int spriteWidth = std::abs(int(spriteHeight * 
+                (double)enemy.sprite->w / enemy.sprite->h));
+  int drawStartX = -spriteWidth / 2 + spriteScreenX;
+  int drawEndX   =  spriteWidth / 2 + spriteScreenX;
+
+  // Draw blue rectangle
+  for (int x = drawStartX; x < drawEndX; x++) {
+    if (x < 0 || x >= SCREEN_W) continue;
+    // Z-buffer check: sprite must be closer than wall
+    if (transformY >= zBuffer[x]) continue;
+
+    Texture* spriteToUse = enemy.sprite;
+
+    if (!enemy.directionalSprites.empty() &&
+        dirIndex < enemy.directionalSprites.size() &&
+        enemy.directionalSprites[dirIndex])
+    {
+        spriteToUse = enemy.directionalSprites[dirIndex];
+    }
+
+    for (int y = drawStartY; y < drawEndY; y++) {
+      int texX = int((x - drawStartX) * spriteToUse->w / spriteWidth);
+      int texY = int((y - drawStartY) * spriteToUse->h / spriteHeight);
+
+      texX = std::clamp(texX, 0, spriteToUse->w - 1);
+      texY = std::clamp(texY, 0, spriteToUse->h - 1);
+
+      uint32_t color = spriteToUse->pixels[texY * spriteToUse->w + texX];
+
+      // Transparent pixel skip (if using black as transparency)
+      uint8_t alpha = (color >> 24) & 0xFF;
+      if (alpha > 10) {
+          putPixel(x, y, color);
+      }
+    }
+  }
+}
+
+
 static inline uint32_t packARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
   return (uint32_t(a) << 24) | (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(b);
 }
@@ -355,6 +584,7 @@ static void render() {
 
   double moveSpeed = 0.06;
   double rotSpeed  = 0.045;
+  
 
   if (keys[SDL_SCANCODE_W]) {
     double nx = posX + dirX * moveSpeed;
@@ -400,6 +630,9 @@ static void render() {
     planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
     planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
   }
+  updateEnemy(enemy1);
+  updateEnemy(enemy0);
+  updateEnemy(enemy2);
   render();
   
 }
@@ -440,18 +673,42 @@ int main() {
     SCREEN_H
   );
 
-  // try fo load
+  // try to load all textures
 
   bool ok = true;
   ok &= loadBMPTexture("tex/wall0.png", texWall0);
+
+  ok &= loadBMPTexture("tex/E0.png", texEnemy0);
+  ok &= loadBMPTexture("tex/E1.png", texEnemy1);
+
+
+  ok &= loadBMPTexture("tex/E0.png",  texC1);
+  ok &= loadBMPTexture("tex/wall0.png",  texC2);
+  ok &= loadBMPTexture("tex/wall2.png",  texC4);
+  ok &= loadBMPTexture("tex/ceil0.png",  texC3);
 
   if (!ok) {
     std::cerr << "Texture load failure\n";
   }
 
-
   wallTextures.push_back(&texWall0);
+ 
   
+  chair.directionalSprites = {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  };
+  chair.verticalPlaneOffset = 0; 
+
+  sprites = {
+    &enemy0,
+    &enemy1,
+    &enemy2,
+    &chair
+  };
+
   emscripten_set_main_loop(loop, 0, true);
   EM_ASM({
   function resizeCanvas() {
@@ -460,7 +717,7 @@ int main() {
     let screenW = window.innerWidth;
     let screenH = window.innerHeight;
 
-    let size = Math.min(screenW, screenH); // keep it as square for now
+    let size = Math.min(screenW, screenH); // keep square
 
     canvas.style.width  = size + "px";
     canvas.style.height = size + "px";
