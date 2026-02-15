@@ -8,6 +8,7 @@
 #include <cstring>
 #include <SDL_image.h>
 
+
 static void playMusic() {
   EM_ASM({
     if (!Module.music) {
@@ -28,16 +29,21 @@ static void stopMusic() {
   });
 }
 
+// ==================================================
+// CONSTANTS
+
 static constexpr int SCREEN_W = 640;
 static constexpr int SCREEN_H = 640;
 
 static constexpr int TEX_W = 64;
 static constexpr int TEX_H = 64;
 
+// Simple 2D map: 0 = empty, 1..N = wall texture index
 static constexpr int MAP_W = 24;
 static constexpr int MAP_H = 24;
 static std::vector<double> zBuffer(SCREEN_W);
 
+// ==================================================
 // MAP 
 
 static int worldMap[MAP_H][MAP_W] = {
@@ -121,6 +127,8 @@ static int ceilingMap[MAP_H][MAP_W] = {
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 };
 
+// ==================================================
+// TYPES
 
 struct Texture {
   std::vector<uint32_t> pixels; // ARGB8888
@@ -139,46 +147,15 @@ static std::vector<uint32_t> gFrame(SCREEN_W * SCREEN_H);
 // TEXTURES
 // static texture variables, will try to assign at compile time
 static Texture texWall0;
-
-static std::vector<Texture*> floorTextures;
-static std::vector<Texture*> ceilTextures;
-static std::vector<Texture*> wallTextures;
-
-
-static double posX = 12.0;
-static double posY = 12.0;
-
-static double dirX = -1.0;
-static double dirY =  0.0;
-
-static double planeX = 0.0;
-static double planeY = 0.66; 
-
-
-// GAME LOGIC
-
-// game states
-enum class GameState {
-  MENU,
-  PLAYING
-};
-
-static GameState gState = GameState::MENU;
-
-// enemy info
-struct Enemy {
-  double x;
-  double y;
-  Texture* sprite; 
-  double heightScale; 
-  std::vector<Texture*> directionalSprites; 
-  int verticalPlaneOffset = 0;
-};
-
-static std::vector<Enemy*> sprites;
+static Texture texWall1;
+static Texture texWall2;
+static Texture texWall3;
+static Texture texFloor0;
+static Texture texFloor1;
+static Texture texCeil0;
+static Texture texMenu;
 static Texture texEnemy0;
 
-//future angle or direactuonl views for spirtes/enemies
 Texture texC1; // front
 Texture texC2; // front-right
 Texture texC3; // right
@@ -188,29 +165,30 @@ Texture texC4; // back-right
 static Texture texEnemy1;
 static Texture texEnemy2;
 
-static Enemy enemy0 {  10.5, 12.0, &texEnemy0, 1};
-static Enemy enemy1 {  10.5, 1.0, &texEnemy1, 1};
-static Enemy enemy2 {  1.5, 12.0, &texEnemy2, 1};
-static Enemy chair {  10.5, 16.0, &texC1, 0.4};
 
-static void updateEnemy(Enemy& enemy) {
-  double dx = posX - enemy.x;
-  double dy = posY - enemy.y;
-  double dist = std::sqrt(dx * dx + dy * dy);
+// list of all possible map texture 
+static std::vector<Texture*> floorTextures;
+static std::vector<Texture*> ceilTextures;
+static std::vector<Texture*> wallTextures;
 
-  if (dist < 0.4) {
-    // Game over -> back to menu
-    gState = GameState::MENU;
-    stopMusic(); 
-    return;
-  }
+// PLAYER CAMERA 
 
-  if (dist > 0.001) {
-    enemy.x += (dx / dist) * 0.03;
-    enemy.y += (dy / dist) * 0.03;
-  }
+static double posX = 12.0;
+static double posY = 12.0;
 
-}
+static double dirX = -1.0;
+static double dirY =  0.0;
+
+static double planeX = 0.0;
+static double planeY = 0.66;  //FOV 
+
+// GAME LOGIC
+
+// game states
+enum class GameState {
+  MENU,
+  PLAYING
+};
 
 static GameState gState = GameState::MENU;
 
@@ -251,6 +229,55 @@ static void updateEnemy(Enemy& enemy) {
   //std::cerr << enemy.x << " " << enemy.y << std::endl;
 
 }
+
+// ==================================================
+// TEXTURE LOADING PREP 
+
+static inline uint32_t packARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
+  return (uint32_t(a) << 24) | (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(b);
+}
+
+static bool loadBMPTexture(const std::string& path, Texture& out) {
+  //1 SDL_Surface* s = SDL_LoadBMP(path.c_str());
+  SDL_Surface* s = IMG_Load(path.c_str());
+
+  if (!s) {
+    std::cerr << "IMG_Load failed: " << path 
+              << " : " << IMG_GetError() << "\n";
+    return false;
+  }
+
+  // Convert to ARGB8888 for easy pixel reads
+  SDL_Surface* conv = SDL_ConvertSurfaceFormat(s, SDL_PIXELFORMAT_ARGB8888, 0);
+  SDL_FreeSurface(s);
+  if (!conv) {
+    std::cerr << "SDL_ConvertSurfaceFormat failed: " << path << " : " << SDL_GetError() << "\n";
+    return false;
+  }
+
+  out.w = conv->w;
+  out.h = conv->h;
+  out.pixels.resize(size_t(out.w) * size_t(out.h));
+
+  std::memcpy(out.pixels.data(), conv->pixels, out.pixels.size() * sizeof(uint32_t));
+  SDL_FreeSurface(conv);
+
+  return true;
+}
+
+static inline uint32_t sampleTex(const Texture& t, int x, int y) {
+  x &= (TEX_W - 1);
+  y &= (TEX_H - 1);
+  return t.pixels[size_t(y) * TEX_W + size_t(x)];
+}
+
+static inline void putPixel(int x, int y, uint32_t argb) {
+  if ((unsigned)x >= SCREEN_W || (unsigned)y >= SCREEN_H) return;
+  gFrame[size_t(y) * SCREEN_W + size_t(x)] = argb;
+}
+
+// ==================================================
+// VISIBILITY & ACTUAL ENGINE 
 
 static bool hasLineOfSight(double x0, double y0, double x1, double y1) {
   double dx = x1 - x0;
@@ -381,50 +408,192 @@ static void renderEnemyPlaceholder(const Enemy& enemy) {
     }
   }
 }
+//interactables
+
+enum class InteractType {
+  TOGGLE_WALL_TILE,     // changes worldMap[y][x] (door open/close)
+  TOGGLE_FLOOR_TILE,    // changes floorMap
+  TOGGLE_CEIL_TILE,     // changes ceilingMap
+  TOGGLE_SPRITE_TEXTURE // swaps a sprite's texture pointer
+};
+
+struct Interactable {
+  double x;
+  double y;
+  double radius;        // how close you must be
+  InteractType type;
+
+  std::string promptNear;   // e.g. "Press E to open"
+  std::string promptFar;    // optional (can be "")
+
+  // “toggle state”
+  bool isOn = false;
+
+  // For map changes:
+  int cellX = -1;
+  int cellY = -1;
+  int offValue = 0;     // map value when off
+  int onValue  = 0;     // map value when on
+
+  // For sprite changes:
+  Texture** spritePtr = nullptr; // pointer-to-pointer so we can swap it
+  Texture*  offTex = nullptr;
+  Texture*  onTex  = nullptr;
+};
 
 
-static inline uint32_t packARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
-  return (uint32_t(a) << 24) | (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(b);
+static std::vector<Interactable> interactables;
+
+static void initInteractables() {
+  Interactable door;
+  door.x = 0.5;
+  door.y = 8.5;
+  door.radius = 1.2;
+  door.type = InteractType::TOGGLE_WALL_TILE;
+  door.promptNear = "Press E to open/close";
+  door.cellX = 0;
+  door.cellY = 8;
+  door.offValue = 1; // closed door tile (some wall texture index)
+  door.onValue  = 3; // open (empty)
+  door.isOn = false; // start closed
+  interactables.push_back(door);
+
+  // Example: toggle chair texture (swap sprite)
+  Interactable chairSwap;
+  chairSwap.x = chair.x;
+  chairSwap.y = chair.y;
+  chairSwap.radius = 1.2;
+  chairSwap.type = InteractType::TOGGLE_SPRITE_TEXTURE;
+  chairSwap.promptNear = "Press E to change chair";
+  chairSwap.spritePtr = &chair.sprite;
+  chairSwap.offTex = &texC1;
+  chairSwap.onTex  = &texC2;
+  chairSwap.isOn = false;
+  interactables.push_back(chairSwap);
 }
 
-static bool loadBMPTexture(const std::string& path, Texture& out) {
-  //1 SDL_Surface* s = SDL_LoadBMP(path.c_str());
-  SDL_Surface* s = IMG_Load(path.c_str());
+static int gNearestInteractable = -1;
+static double gNearestDist = 1e9;
 
-  if (!s) {
-    std::cerr << "IMG_Load failed: " << path 
-              << " : " << IMG_GetError() << "\n";
-    return false;
+static void updateNearestInteractable() {
+  gNearestInteractable = -1;
+  gNearestDist = 1e9;
+
+  for (int i = 0; i < (int)interactables.size(); i++) {
+    auto& it = interactables[i];
+    double dx = it.x - posX;
+    double dy = it.y - posY;
+    double dist = std::sqrt(dx*dx + dy*dy);
+
+    if (dist <= it.radius && dist < gNearestDist) {
+      gNearestDist = dist;
+      gNearestInteractable = i;
+    }
+  }
+}
+
+static bool prevE = false;
+
+static void tryInteract(const Uint8* keys) {
+  bool eDown = keys[SDL_SCANCODE_E];
+  bool ePressed = (eDown && !prevE);
+  prevE = eDown;
+
+  if (!ePressed) return;
+  if (gNearestInteractable < 0) return;
+
+  auto& it = interactables[gNearestInteractable];
+
+  it.isOn = !it.isOn;
+
+  switch (it.type) {
+    case InteractType::TOGGLE_WALL_TILE: {
+      worldMap[it.cellY][it.cellX] = it.isOn ? it.onValue : it.offValue;
+    } break;
+
+    case InteractType::TOGGLE_FLOOR_TILE: {
+      floorMap[it.cellY][it.cellX] = it.isOn ? it.onValue : it.offValue;
+    } break;
+
+    case InteractType::TOGGLE_CEIL_TILE: {
+      ceilingMap[it.cellY][it.cellX] = it.isOn ? it.onValue : it.offValue;
+    } break;
+
+    case InteractType::TOGGLE_SPRITE_TEXTURE: {
+      if (it.spritePtr && it.offTex && it.onTex) {
+        *it.spritePtr = it.isOn ? it.onTex : it.offTex;
+      }
+    } break;
+  }
+}
+
+
+static void drawPromptBar(const std::string& msg) {
+  // simple rectangle background (no font needed)
+  int w = 360, h = 40;
+  int x0 = (SCREEN_W - w) / 2;
+  int y0 = SCREEN_H - h - 18;
+
+  uint32_t bg = packARGB(180, 0, 0, 0);
+  for (int y = y0; y < y0 + h; y++)
+    for (int x = x0; x < x0 + w; x++)
+      putPixel(x, y, bg);
+
+  // If you want actual text without SDL_ttf,
+  // easiest is HTML overlay (Option B below).
+}
+static void showPromptText(const std::string& msg) {
+  EM_ASM({
+    let text = UTF8ToString($0);
+
+    let el = document.getElementById("gamePrompt");
+
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "gamePrompt";
+      el.style.position = "absolute";
+      el.style.left = "50%";
+      el.style.bottom = "40px";
+      el.style.transform = "translateX(-50%)";
+      el.style.padding = "10px 18px";
+      el.style.background = "rgba(0,0,0,0.65)";
+      el.style.color = "white";
+      el.style.fontFamily = "system-ui, sans-serif";
+      el.style.fontSize = "18px";
+      el.style.borderRadius = "12px";
+      el.style.pointerEvents = "none";
+      el.style.transition = "opacity 0.15s ease";
+      document.body.appendChild(el);
+    }
+
+    el.textContent = text;
+    el.style.opacity = "1";
+  }, msg.c_str());
+}
+
+static void hidePromptText() {
+  EM_ASM({
+    let el = document.getElementById("gamePrompt");
+    if (el) el.style.opacity = "0";
+  });
+}
+static void renderPromptIfNeeded() {
+  if (gNearestInteractable < 0) {
+    hidePromptText();
+    return;
   }
 
-  // Convert to ARGB8888 for easy pixel reads
-  SDL_Surface* conv = SDL_ConvertSurfaceFormat(s, SDL_PIXELFORMAT_ARGB8888, 0);
-  SDL_FreeSurface(s);
-  if (!conv) {
-    std::cerr << "SDL_ConvertSurfaceFormat failed: " << path << " : " << SDL_GetError() << "\n";
-    return false;
-  }
-
-  out.w = conv->w;
-  out.h = conv->h;
-  out.pixels.resize(size_t(out.w) * size_t(out.h));
-
-  std::memcpy(out.pixels.data(), conv->pixels, out.pixels.size() * sizeof(uint32_t));
-  SDL_FreeSurface(conv);
-
-  return true;
+  showPromptText(interactables[gNearestInteractable].promptNear);
 }
 
-static inline uint32_t sampleTex(const Texture& t, int x, int y) {
-  x &= (TEX_W - 1);
-  y &= (TEX_H - 1);
-  return t.pixels[size_t(y) * TEX_W + size_t(x)];
-}
 
-static inline void putPixel(int x, int y, uint32_t argb) {
-  if ((unsigned)x >= SCREEN_W || (unsigned)y >= SCREEN_H) return;
-  gFrame[size_t(y) * SCREEN_W + size_t(x)] = argb;
-}
+
+
+
+
+
+
+
 
 static void render() {
 
@@ -569,22 +738,91 @@ static void render() {
       putPixel(x, SCREEN_H - y, ceilCol);
     }
   }
+
+  // Sort sprites from far to near
+  std::sort(sprites.begin(), sprites.end(),
+      [](Enemy* a, Enemy* b)
+  {
+      double dxA = posX - a->x;
+      double dyA = posY - a->y;
+      double dxB = posX - b->x;
+      double dyB = posY - b->y;
+
+      double distA = dxA * dxA + dyA * dyA;
+      double distB = dxB * dxB + dyB * dyB;
+
+      return distA > distB;  // FARTHER first
+  });
+  // main rendering area
+  for (Enemy* e : sprites) {
+    renderEnemyPlaceholder(*e);
+  }
+
+  renderPromptIfNeeded();
+  SDL_UpdateTexture(gScreenTex, nullptr, gFrame.data(), SCREEN_W * int(sizeof(uint32_t)));
+  SDL_RenderClear(gRenderer);
+  SDL_RenderCopy(gRenderer, gScreenTex, nullptr, nullptr);
+  SDL_RenderPresent(gRenderer);
+  
+}
+// MENU RENDERING
+
+static void renderMenu() {
+  // Clear frame
+  std::fill(gFrame.begin(), gFrame.end(), packARGB(255, 0, 0, 0));
+
+  // Draw menu image centered
+  if (!texMenu.pixels.empty()) {
+    int startX = (SCREEN_W - texMenu.w) / 2;
+    int startY = (SCREEN_H - texMenu.h) / 2;
+
+    for (int y = 0; y < texMenu.h; y++) {
+      for (int x = 0; x < texMenu.w; x++) {
+        uint32_t c = texMenu.pixels[y * texMenu.w + x];
+        putPixel(startX + x, startY + y, c);
+      }
+    }
+  }
+
+  SDL_UpdateTexture(gScreenTex, nullptr, gFrame.data(), SCREEN_W * sizeof(uint32_t));
+  SDL_RenderClear(gRenderer);
+  SDL_RenderCopy(gRenderer, gScreenTex, nullptr, nullptr);
+  SDL_RenderPresent(gRenderer);
 }
 
+// ==================================================
+// UPDATE EVERYTHING AKA the STATE MACHINE
 
-
-
-
-
-
-  static void update() {
+static void update() {
   const Uint8* keys = SDL_GetKeyboardState(nullptr);
+
+  if (gState == GameState::MENU) {
+    if (keys[SDL_SCANCODE_RETURN]) {
+      
+      posX = 12.0;
+      posY = 12.0;
+      dirX = -1.0;
+      dirY =  0.0;
+      planeX = 0.0;
+      planeY = 0.66;
+      enemy0 = { 18.0, 18.0, &texEnemy0, 1 };
+      enemy1 = { 1.0, 18.0, &texEnemy1, 1};
+      enemy2 = { 18.0, 1.0, &texEnemy2, 1 };
+
+      playMusic(); 
+      gState = GameState::PLAYING;
+
+
+    }
+    renderMenu();
+    return;
+  }
+
   // ======================
   // PLAYER MOVEMENT
 
   double moveSpeed = 0.06;
   double rotSpeed  = 0.045;
-  
 
   if (keys[SDL_SCANCODE_W]) {
     double nx = posX + dirX * moveSpeed;
@@ -630,18 +868,32 @@ static void render() {
     planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
     planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
   }
+  
+
+
   updateEnemy(enemy1);
   updateEnemy(enemy0);
   updateEnemy(enemy2);
+
+
+  updateNearestInteractable();
+  tryInteract(keys);
   render();
   
+  
 }
+
+// ==================================================
+// MAIN LOOP
 
 static void loop() {
   SDL_Event e;
   while (SDL_PollEvent(&e)) {}
   update();
 }
+
+// ==================================================
+// MAIN
 
 int main() {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -677,22 +929,37 @@ int main() {
 
   bool ok = true;
   ok &= loadBMPTexture("tex/wall0.png", texWall0);
-
+  ok &= loadBMPTexture("tex/wall1.png", texWall1);
+  ok &= loadBMPTexture("tex/wall2.png", texWall2);
+  ok &= loadBMPTexture("tex/wall3.png", texWall3);
+  ok &= loadBMPTexture("tex/floor0.png", texFloor0);
+  ok &= loadBMPTexture("tex/floor1.png", texFloor1);
+  ok &= loadBMPTexture("tex/ceil0.png", texCeil0);
   ok &= loadBMPTexture("tex/E0.png", texEnemy0);
   ok &= loadBMPTexture("tex/E1.png", texEnemy1);
-
+  ok &= loadBMPTexture("tex/menu.png",  texMenu);
 
   ok &= loadBMPTexture("tex/E0.png",  texC1);
   ok &= loadBMPTexture("tex/wall0.png",  texC2);
   ok &= loadBMPTexture("tex/wall2.png",  texC4);
   ok &= loadBMPTexture("tex/ceil0.png",  texC3);
 
+
+
+
   if (!ok) {
     std::cerr << "Texture load failure\n";
   }
 
+  floorTextures.push_back(&texFloor0);
+  floorTextures.push_back(&texFloor1);
+  
+  ceilTextures.push_back(&texCeil0);
+
   wallTextures.push_back(&texWall0);
- 
+  wallTextures.push_back(&texWall1);
+  wallTextures.push_back(&texWall2);
+  wallTextures.push_back(&texWall3);
   
   chair.directionalSprites = {
     &texC1,
@@ -708,6 +975,7 @@ int main() {
     &enemy2,
     &chair
   };
+  initInteractables();
 
   emscripten_set_main_loop(loop, 0, true);
   EM_ASM({
