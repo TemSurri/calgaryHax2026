@@ -44,70 +44,58 @@ static constexpr int MAP_H = 24;
 static std::vector<double> zBuffer(SCREEN_W);
 
 // ==================================================
-// MAP 
+// MAP newnenwne
 
-static int worldMap[MAP_H][MAP_W] = {
-  {1,4,4,4,4,4,1,2,4,4,4,2,1,2,1,2,1,2,1,2,4,4,4,1},
-  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+static int worldMap[MAP_H][MAP_W];
+static int floorMap[MAP_H][MAP_W];
+static int ceilingMap[MAP_H][MAP_W];
+
+struct MapData {
+  int (*world)[MAP_W];
+  int (*floor)[MAP_W];
+  int (*ceil)[MAP_W];
 };
 
-static int floorMap[MAP_H][MAP_W] = {
-  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
-  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+static int worldMap1[MAP_H][MAP_W] = {
+{2,2,1,4,1,3,2,2,2,2,1,4,1,3,2,2,1,3,1,8,1,3,1,2},
+
+{2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2},
+
+{2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+
+{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+
+{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+{1,2,2,2,2,2,2,2,2,2,0,0,0,2,2,2,2,2,2,0,2,2,2,2},
+{1,0,0,0,0,0,0,0,2,6,0,6,0,6,2,0,0,0,0,0,0,0,0,1},
+{3,0,0,0,0,0,0,0,0,6,0,6,0,6,2,0,0,0,0,0,0,0,0,4},
+{1,0,0,0,0,0,0,0,2,6,0,6,0,6,2,0,0,0,0,0,0,0,0,1},
+
+{1,0,0,0,0,0,0,0,2,6,0,6,0,6,2,0,0,0,0,0,0,0,0,1},
+
+{2,1,1,4,1,4,1,1,1,2,2,2,2,2,2,1,4,1,1,4,1,1,4,2}
 };
 
-static int ceilingMap[MAP_H][MAP_W] = {
+static int floorMap1[MAP_H][MAP_W] = {
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -126,6 +114,49 @@ static int ceilingMap[MAP_H][MAP_W] = {
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 };
+
+static int ceilingMap1[MAP_H][MAP_W] = {
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+};
+
+static MapData map1 = {
+  worldMap1,
+  floorMap1,
+  ceilingMap1
+};
+
+static void loadMap(const MapData& m) {
+  for (int y = 0; y < MAP_H; y++) {
+    for (int x = 0; x < MAP_W; x++) {
+      worldMap[y][x]   = m.world[y][x];
+      floorMap[y][x]   = m.floor[y][x];
+      ceilingMap[y][x] = m.ceil[y][x];
+    }
+  }
+}
 
 // ==================================================
 // TYPES
@@ -150,16 +181,53 @@ static Texture texWall0;
 static Texture texWall1;
 static Texture texWall2;
 static Texture texWall3;
+static Texture texWall4;
+static Texture texWall5;
+static Texture texWall6;
+static Texture texWall7;
+
 static Texture texFloor0;
 static Texture texFloor1;
 static Texture texCeil0;
 static Texture texMenu;
 static Texture texEnemy0;
 
+//chair stuyff
 Texture texC1; // front
 Texture texC2; // front-right
 Texture texC3; // right
 Texture texC4; // back-right
+
+//tables
+Texture texT1; // front
+Texture texT2; // front-right
+Texture texT3; // right
+Texture texT4; // back-right
+
+//person
+Texture texP4; // front
+Texture texP41; // front-right
+Texture texP42; // right
+Texture texP43; // back-right
+
+//person
+Texture texP3; // front
+Texture texP31; // front-right
+Texture texP32; // right
+Texture texP33; // back-right
+
+//person
+Texture texP1; // front
+Texture texP11; // front-right
+Texture texP12; // right
+Texture texP13; // back-right
+
+//person
+Texture texP2; // front
+Texture texP21; // front-right
+Texture texP22; // right
+Texture texP23; // back-right
+
 
 
 static Texture texEnemy1;
@@ -187,10 +255,14 @@ static double planeY = 0.66;  //FOV
 // game states
 enum class GameState {
   MENU,
-  PLAYING
+  PLAYING,
+  SCHOOL1,
+  SCHOOL2,
+  HOME,
 };
 
 static GameState gState = GameState::MENU;
+
 
 // enemy info
 struct Enemy {
@@ -200,6 +272,15 @@ struct Enemy {
   double heightScale; 
   std::vector<Texture*> directionalSprites; 
   int verticalPlaneOffset = 0;
+
+
+  //movement 
+  double dirX = 0;
+  double dirY = 0;
+  double speed = 0.02;
+
+  double stateTimer = 0.0;
+  bool isWalking = false;
 };
 
 static std::vector<Enemy*> sprites;
@@ -207,7 +288,198 @@ static std::vector<Enemy*> sprites;
 static Enemy enemy0 {  10.5, 12.0, &texEnemy0, 1};
 static Enemy enemy1 {  10.5, 1.0, &texEnemy1, 1};
 static Enemy enemy2 {  1.5, 12.0, &texEnemy2, 1};
-static Enemy chair {  10.5, 16.0, &texC1, 0.4};
+
+static Enemy chair {  17.5, 20.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+
+static Enemy chair1 {  17.5, 20.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy table1 {  17.5, 20.5, &texC1, 0.6, {
+    &texT1,
+    &texT2,
+    &texT3,
+    &texT4,
+  }, 1};
+
+static Enemy chair2 {  18.5, 20.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy table2 {  18.5, 20.5, &texC1, 0.6, {
+    &texT1,
+    &texT2,
+    &texT3,
+    &texT4,
+  }, 1};
+
+
+static Enemy chair3 {  21.5, 20.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy table3 {  21.5, 20.5, &texC1, 0.6, {
+    &texT1,
+    &texT2,
+    &texT3,
+    &texT4,
+  }, 1};
+
+
+static Enemy chair4 {  20.5, 20.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+
+static Enemy chair5 {  17.5, 19.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy chair6 {  18.5, 19.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy chair7 {  21.5, 19.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy chair8 {  20.5, 19.0, &texC1, 0.6, {
+    &texC1,
+    &texC2,
+    &texC3,
+    &texC4,
+  }, 1};
+
+static Enemy table {  12.5, 14.0, &texC1, 0.6, {
+    &texT1,
+    &texT2,
+    &texT3,
+    &texT4,
+  }, 1};
+
+
+// ===== TOP LEFT CLASSROOM =====
+
+// Row 1
+static Enemy tl_table1 { 3.5, 2.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tl_chair1 { 3.5, 2.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+static Enemy tl_table2 { 5.5, 2.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tl_chair2 { 5.5, 2.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+// Row 2
+static Enemy tl_table3 { 3.5, 4.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tl_chair3 { 3.5, 4.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+static Enemy tl_table4 { 5.5, 4.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tl_chair4 { 5.5, 4.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+// ===== TOP RIGHT CLASSROOM =====
+
+// Row 1
+static Enemy tr_table1 { 10.5, 2.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tr_chair1 { 10.5, 2.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+static Enemy tr_table2 { 12.5, 2.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tr_chair2 { 12.5, 2.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+// Row 2
+static Enemy tr_table3 { 10.5, 4.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tr_chair3 { 10.5, 4.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+static Enemy tr_table4 { 12.5, 4.5, &texT1, 0.6, { &texT1,&texT2,&texT3,&texT4 }, 1 };
+static Enemy tr_chair4 { 12.5, 4.0, &texC1, 0.6, { &texC1,&texC2,&texC3,&texC4 }, 1 };
+
+
+static Enemy person4 {  12.5, 10.0, &texP4, 0.8, {
+    &texP4,
+    &texP41,
+    &texP42,
+    &texP43,
+  }, 0};
+  static Enemy person1 {  11.5, 14.0, &texP1, 0.8, {
+    &texP1,
+    &texP11,
+    &texP12,
+    &texP13,
+  }, 0};
+  static Enemy person2 {  14.5, 14.0, &texP2, 0.8, {
+    &texP2,
+    &texP21,
+    &texP22,
+    &texP23,
+  }, 0};
+  static Enemy person3{  12.5, 12.0, &texP3, 0.4, {
+    &texP3,
+    &texP31,
+    &texP32,
+    &texP33,
+  }, 1};
+
+
+static void pickRandomDirection(Enemy& e) {
+  double angle = (rand() % 628) / 100.0; // 0 to 6.28
+  e.dirX = cos(angle);
+  e.dirY = sin(angle);
+}
+
+static void updateWander(Enemy& e) {
+
+  e.stateTimer -= 0.016; // approx frame time
+
+  if (e.stateTimer <= 0) {
+    e.isWalking = !e.isWalking;
+
+    if (e.isWalking) {
+      pickRandomDirection(e);
+      e.stateTimer = 2.0 + (rand() % 200) / 100.0; // walk 2–4 sec
+    } else {
+      e.stateTimer = 1.0 + (rand() % 200) / 200.0; // idle 1–2 sec
+    }
+  }
+
+  if (!e.isWalking) return;
+
+  double nx = e.x + e.dirX * e.speed;
+  double ny = e.y + e.dirY * e.speed;
+
+  if (worldMap[int(e.y)][int(nx)] == 0)
+      e.x = nx;
+  else
+      pickRandomDirection(e);
+
+  if (worldMap[int(ny)][int(e.x)] == 0)
+      e.y = ny;
+  else
+      pickRandomDirection(e);
+}
 
 static void updateEnemy(Enemy& enemy) {
   double dx = posX - enemy.x;
@@ -333,8 +605,8 @@ static void renderEnemyPlaceholder(const Enemy& enemy) {
   if (angle < 0) angle += 2 * M_PI;
 
   // Convert to 8 directions
-  int dirIndex = int((angle / (2 * M_PI)) * 8.0);
-  dirIndex = dirIndex % 8;
+  int dirIndex = int((angle / (2 * M_PI)) * 4.0);
+  dirIndex = dirIndex % 4;
 
   
   // Ground correction factor
@@ -799,6 +1071,8 @@ static void update() {
   if (gState == GameState::MENU) {
     if (keys[SDL_SCANCODE_RETURN]) {
       
+      loadMap(map1);
+        
       posX = 12.0;
       posY = 12.0;
       dirX = -1.0;
@@ -871,13 +1145,19 @@ static void update() {
   
 
 
-  updateEnemy(enemy1);
-  updateEnemy(enemy0);
-  updateEnemy(enemy2);
+  //updateEnemy(enemy1);
+  //updateEnemy(enemy0);
+  //updateEnemy(enemy2);
 
 
   updateNearestInteractable();
   tryInteract(keys);
+
+  updateWander(person1);
+  updateWander(person2);
+  updateWander(person3);
+  updateWander(person4);
+
   render();
   
   
@@ -932,6 +1212,12 @@ int main() {
   ok &= loadBMPTexture("tex/wall1.png", texWall1);
   ok &= loadBMPTexture("tex/wall2.png", texWall2);
   ok &= loadBMPTexture("tex/wall3.png", texWall3);
+  ok &= loadBMPTexture("tex/wall4.png", texWall4);
+  ok &= loadBMPTexture("tex/wall5.png", texWall5);
+  ok &= loadBMPTexture("tex/wall6.png", texWall6);
+  ok &= loadBMPTexture("tex/wall7.png", texWall7);
+
+
   ok &= loadBMPTexture("tex/floor0.png", texFloor0);
   ok &= loadBMPTexture("tex/floor1.png", texFloor1);
   ok &= loadBMPTexture("tex/ceil0.png", texCeil0);
@@ -939,10 +1225,36 @@ int main() {
   ok &= loadBMPTexture("tex/E1.png", texEnemy1);
   ok &= loadBMPTexture("tex/menu.png",  texMenu);
 
-  ok &= loadBMPTexture("tex/E0.png",  texC1);
-  ok &= loadBMPTexture("tex/wall0.png",  texC2);
-  ok &= loadBMPTexture("tex/wall2.png",  texC4);
-  ok &= loadBMPTexture("tex/ceil0.png",  texC3);
+  ok &= loadBMPTexture("tex/C0.png",  texC1);
+  ok &= loadBMPTexture("tex/C1.png",  texC2);
+  ok &= loadBMPTexture("tex/C2.png",  texC3);
+  ok &= loadBMPTexture("tex/C3.png",  texC4);
+
+  ok &= loadBMPTexture("tex/T0.png",  texT1);
+  ok &= loadBMPTexture("tex/T1.png",  texT2);
+  ok &= loadBMPTexture("tex/T2.png",  texT3);
+  ok &= loadBMPTexture("tex/T3.png",  texT4);
+
+  // npcs
+    ok &= loadBMPTexture("tex/P1.png",  texP1);
+  ok &= loadBMPTexture("tex/P11.png",  texP11);
+  ok &= loadBMPTexture("tex/P12.png",  texP12);
+  ok &= loadBMPTexture("tex/P13.png",  texP13);
+
+    ok &= loadBMPTexture("tex/T0.png",  texP2);
+  ok &= loadBMPTexture("tex/T1.png",  texP21);
+  ok &= loadBMPTexture("tex/T2.png",  texP22);
+  ok &= loadBMPTexture("tex/T3.png",  texP23);
+
+    ok &= loadBMPTexture("tex/T0.png",  texP3);
+  ok &= loadBMPTexture("tex/T1.png",  texP31);
+  ok &= loadBMPTexture("tex/T2.png",  texP32);
+  ok &= loadBMPTexture("tex/T3.png",  texP33);
+
+    ok &= loadBMPTexture("tex/T0.png",  texP4);
+  ok &= loadBMPTexture("tex/T1.png",  texP41);
+  ok &= loadBMPTexture("tex/T2.png",  texP42);
+  ok &= loadBMPTexture("tex/T3.png",  texP43);
 
 
 
@@ -960,22 +1272,61 @@ int main() {
   wallTextures.push_back(&texWall1);
   wallTextures.push_back(&texWall2);
   wallTextures.push_back(&texWall3);
+  wallTextures.push_back(&texWall4);
+  wallTextures.push_back(&texWall5);
+  wallTextures.push_back(&texWall6);
+  wallTextures.push_back(&texWall7);
   
-  chair.directionalSprites = {
-    &texC1,
-    &texC2,
-    &texC3,
-    &texC4,
-  };
-  chair.verticalPlaneOffset = 0; 
+
 
   sprites = {
     &enemy0,
     &enemy1,
     &enemy2,
-    &chair
+    &chair,
+    &chair1,
+    &chair2,
+    &chair3,
+    &chair4,
+    &chair5,
+    &chair6,
+    &chair7,
+    &chair8,
+    &table,
+    &table1,
+    &table2,
+    &table3,
+    // Top left classroom
+&tl_table1, &tl_chair1,
+&tl_table2, &tl_chair2,
+&tl_table3, &tl_chair3,
+&tl_table4, &tl_chair4,
+
+// Top right classroom
+&tr_table1, &tr_chair1,
+&tr_table2, &tr_chair2,
+&tr_table3, &tr_chair3,
+&tr_table4, &tr_chair4,
+
+
+    &person1,
+     &person2,
+      &person3,
+       &person4,
+
   };
+
+
   initInteractables();
+
+
+
+
+
+
+
+
+
 
   emscripten_set_main_loop(loop, 0, true);
   EM_ASM({
