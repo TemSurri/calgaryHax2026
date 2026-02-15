@@ -1,379 +1,477 @@
 #include <SDL.h>
 #include <emscripten.h>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <SDL_image.h>
 
-
-SDL_Window* window = nullptr;
-SDL_Renderer* renderer = nullptr;
-int height = 640;
-int width  = 640;
-
-
-const int MAP_H = 8;
-const int MAP_W = 7;
-
-const int UNIT_H = height / MAP_H;
-const int UNIT_W = width / MAP_W;
-
-int map[MAP_H][MAP_W] = {
-    {1,1,1,1,1,1,1},
-    {1,0,1,0,1,0,1},
-    {1,0,1,0,1,0,1},
-    {1,0,0,0,1,0,1},
-    {1,0,0,0,0,0,1},
-    {1,0,0,0,0,0,1},
-    {1,0,0,0,0,0,1},
-    {1,1,1,1,1,1,1},
-};
-void render3D_wall_line(float len, int i, int fov, float angle, int x, int y, char win) {
-    float line_w = 1.0f;
-    float vertical_bench = (height /2.0f);
-
-    float length =  30000.0f /abs(len);
-    float extrude = (length/2.0f);
-
-    float shade_factor = 1.0f/abs(len/75);
-    if (shade_factor >=1){
-        shade_factor = 1;
+static void playMusic() {
+  EM_ASM({
+    if (!Module.music) {
+      Module.music = new Audio("audio/musick.mp3");
+      Module.music.loop = true;
+      Module.music.volume = 0.6;
     }
-
-        
-    SDL_SetRenderDrawColor(renderer, 200*shade_factor, 0, 0, 255);
-
-    //SDL_Rect rect {
-    //                (i*line_w),
-    //                (vertical_bench-extrude),
-    //                (line_w),
-    //                (length)
-    //            };
-    //SDL_RenderFillRect(renderer, &rect);
-    //std::cerr<<extrude<<std::endl;
-    //
-
-    SDL_RenderDrawLine(
-        renderer,
-        i*line_w,
-        vertical_bench-extrude,
-        i*line_w,
-        vertical_bench+extrude
-        );
-        
-    };
-
-void render2D_map() {
-    SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);
-    for (int i = 0; i < MAP_H; i++) {
-        SDL_RenderDrawLine(
-            renderer,
-            0,
-            i * (height / MAP_H),
-            width,
-            i * (height / MAP_H)
-        );
-    }
-
-    SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
-    for (int i = 0; i < MAP_W; i++) {
-        SDL_RenderDrawLine(
-            renderer,
-            i * (width / MAP_W),
-            0,
-            i * (width / MAP_W),
-            height
-        );
-    }
-
-    for (int r = 0; r < MAP_H; r++) {
-        for (int c = 0; c < MAP_W; c++) {
-            if (map[r][c] == 0) {
-                SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-                SDL_Rect rect {
-                    c * (width / MAP_W),
-                    r * (height / MAP_H),
-                    (width / MAP_W),
-                    (height / MAP_H)
-                };
-                SDL_RenderFillRect(renderer, &rect);
-            }
-        }
-    }
+    Module.music.play();
+  });
 }
 
-namespace Player {
-    int render_ray(float angle);
-
-    struct Player {
-        int x;
-        int y;
-        float angle;
-        int speed;
-
-        int horizontal_collision_check() {
-            int padding{};
-            int potential_wall = (x/UNIT_W);
-            potential_wall += 1;
-
-            if (cos(angle) < 0){
-                potential_wall -= 2;
-                padding = UNIT_W;
-            } 
-
-            int row = y/UNIT_H;
-            int col = potential_wall;
-
-            //std::cerr<<row<<". "<<col<<std::endl;
-            
-            if (((map[row][col]) == 1) && (abs(x-((potential_wall*UNIT_W)+padding))<15)){
-                return 1;
-            }
-
-            return 0;
-        };
-
-        int vertical_collision_check() {
-            int padding{};
-            int potential_wall = (y/UNIT_H);
-            potential_wall += 1;
-
-            if (sin(angle) < 0){
-                potential_wall -= 2;
-                padding = UNIT_H;
-            } 
-
-            int col = x/UNIT_W;
-            int row = potential_wall;
-
-            //std::cerr<<row<<". "<<col<<std::endl;
-            
-            if (((map[row][col]) == 1) && (abs(y-((potential_wall*UNIT_H)+padding))<15)){
-                return 1;
-            }
-
-            return 0;
-        };
-
-        void move_forward(){
-
-            if (horizontal_collision_check() == 0){
-                float dx = cos(angle);
-                x += dx * speed;
-            }; 
-
-            if (vertical_collision_check() == 0){
-                float dy = sin(angle);
-                y += dy * speed;
-
-            }
-        }
-    };
-
-    Player player { 250, 250, -0.9f, 3};
-
-    void render_player() {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255);
-        SDL_Rect r {
-            player.x,
-            player.y,
-            10,
-            10
-        };
-        SDL_RenderFillRect(renderer, &r);
+static void stopMusic() {
+  EM_ASM({
+    if (Module.music) {
+      Module.music.pause();
+      Module.music.currentTime = 0;
     }
-    // checks vertical grid intersections only
-    int vertical_wall_check(int x, float angle) {
+  });
+}
 
-        float y = x * tan(angle);
-        int row = (player.y + y) / UNIT_H;
-        int col = (player.x + x) / UNIT_W;
+static constexpr int SCREEN_W = 640;
+static constexpr int SCREEN_H = 640;
 
-        if (cos(angle) < 0) {
-            col -= 1;
-        }
+static constexpr int TEX_W = 64;
+static constexpr int TEX_H = 64;
 
-        if ((row > 7 || row < 0) || (col > 7 || col < 0)){
-            return 1;
-        };
+static constexpr int MAP_W = 24;
+static constexpr int MAP_H = 24;
+static std::vector<double> zBuffer(SCREEN_W);
 
-        return map[row][col];
-    }
+// MAP 
 
-    int len_ray_vertical(float angle) {
+static int worldMap[MAP_H][MAP_W] = {
+  {1,4,4,4,4,4,1,2,4,4,4,2,1,2,1,2,1,2,1,2,4,4,4,1},
+  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+  {1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+};
 
-        int dir = 1;
-        if (cos(angle) < 0) {
-            dir = -1;
-        }
+static int floorMap[MAP_H][MAP_W] = {
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+};
 
-        int horizontal_displacement = 0;
-        bool clear = true;
+static int ceilingMap[MAP_H][MAP_W] = {
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+};
 
-        while (clear) {
-            // only check when perfectly aligned to grid
-            if ((player.x + horizontal_displacement) % UNIT_W == 0) {
-                int hit = vertical_wall_check(horizontal_displacement, angle);
-                if (hit == 1) {
-                    clear = false;
-                    break;
-                }
-                if (hit == 0) {
-                    horizontal_displacement+= UNIT_W*dir;
-                    continue;
-                }
-            }
-            horizontal_displacement += dir;
-        }
 
-        int len = horizontal_displacement / cos(angle);
-        return len;
-    }
+struct Texture {
+  std::vector<uint32_t> pixels; // ARGB8888
+  int w = 0;
+  int h = 0;
+};
 
-    int horizontal_wall_check(int y, float angle){
-        float x = y/(tan(angle));
+// SDL GLOBALS
 
-        int row = (player.y + y) / UNIT_H;
-        int col = (player.x + x) / UNIT_W;
+static SDL_Window*   gWindow    = nullptr;
+static SDL_Renderer* gRenderer  = nullptr;
+static SDL_Texture*  gScreenTex = nullptr;
 
-        if (sin(angle) < 0) {
-            row -= 1;
-        }
+static std::vector<uint32_t> gFrame(SCREEN_W * SCREEN_H);
 
-        if ((row > 7 || row < 0) || (col > 7 || col < 0)){
-            return 1;
-        };
+// TEXTURES
+// static texture variables, will try to assign at compile time
+static Texture texWall0;
 
-        return map[row][col];
-    };
+static std::vector<Texture*> floorTextures;
+static std::vector<Texture*> ceilTextures;
+static std::vector<Texture*> wallTextures;
 
-    int len_ray_horizontal(float angle) {
-        int dir = 1;
-        if (sin(angle) < 0) {
-            dir = -1;
-        }
 
-        int vertical_displacement = 0;
-        bool clear = true;
-        while (clear) {
-            if ((player.y + vertical_displacement) % UNIT_H == 0) {
-                int check = horizontal_wall_check(vertical_displacement, angle);
-                if (check == 1) {
-                    clear = false;
-                    break;
-                } else if (check == 0) {
-                    vertical_displacement += dir*UNIT_H;
-                    continue;
-                }
-            }
-            
-            vertical_displacement += dir;
-        }
+static double posX = 12.0;
+static double posY = 12.0;
 
-        int len = vertical_displacement / sin(angle);
+static double dirX = -1.0;
+static double dirY =  0.0;
 
-        return len;
-    }
+static double planeX = 0.0;
+static double planeY = 0.66; 
 
-    int render_ray(float angle){
-        int len1 = len_ray_horizontal(angle);
-        int len2 = len_ray_vertical(angle);
+static inline uint32_t packARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
+  return (uint32_t(a) << 24) | (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(b);
+}
 
-        //std::cerr<<len1<<"  "<<len2<<std::endl;
-        int len{};
-        if (len1 <= len2){
-            len = len1;
-        } else if (len1>len2){
-            len = len2;
-        };
+static bool loadBMPTexture(const std::string& path, Texture& out) {
+  //1 SDL_Surface* s = SDL_LoadBMP(path.c_str());
+  SDL_Surface* s = IMG_Load(path.c_str());
 
-        SDL_SetRenderDrawColor(renderer, 0,200,200, 255);
-        SDL_RenderDrawLine(
-            renderer,
-            player.x,
-            player.y,
-            player.x + cos(angle) * len,
-            player.y + sin(angle) * len
-        );
+  if (!s) {
+    std::cerr << "IMG_Load failed: " << path 
+              << " : " << IMG_GetError() << "\n";
+    return false;
+  }
 
-        return len;
-    }
+  // Convert to ARGB8888 for easy pixel reads
+  SDL_Surface* conv = SDL_ConvertSurfaceFormat(s, SDL_PIXELFORMAT_ARGB8888, 0);
+  SDL_FreeSurface(s);
+  if (!conv) {
+    std::cerr << "SDL_ConvertSurfaceFormat failed: " << path << " : " << SDL_GetError() << "\n";
+    return false;
+  }
 
-    void render_fov() {
-        float angle_increment = 0.00156465639;
-        int total_fov = 640;
-        
-        float angle_offset = player.angle - ((total_fov/2) * angle_increment);
+  out.w = conv->w;
+  out.h = conv->h;
+  out.pixels.resize(size_t(out.w) * size_t(out.h));
 
-        for (int i{}; i < (total_fov); i++){
-            float ray_angle = angle_offset + i * angle_increment;
-            
-            int len1 = len_ray_horizontal(ray_angle);
-            int len2 = len_ray_vertical(ray_angle);
+  std::memcpy(out.pixels.data(), conv->pixels, out.pixels.size() * sizeof(uint32_t));
+  SDL_FreeSurface(conv);
 
-            //std::cerr<<len1<<"  "<<len2<<std::endl;
-            char win;
-            int raw_len{};
-            if (len1 <= len2){
-                raw_len = len1;
-                win = 'h';
-            } else if (len1>len2){
-                raw_len = len2;
-                win = 'v';
-            };
+  return true;
+}
 
-            float corrected = raw_len * cos(ray_angle - player.angle);
-            render3D_wall_line(corrected, i, total_fov, player.angle, player.x, player.y, win);
-        }
-    }
-}    
+static inline uint32_t sampleTex(const Texture& t, int x, int y) {
+  x &= (TEX_W - 1);
+  y &= (TEX_H - 1);
+  return t.pixels[size_t(y) * TEX_W + size_t(x)];
+}
 
-void loop() {
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {}
+static inline void putPixel(int x, int y, uint32_t argb) {
+  if ((unsigned)x >= SCREEN_W || (unsigned)y >= SCREEN_H) return;
+  gFrame[size_t(y) * SCREEN_W + size_t(x)] = argb;
+}
 
-    SDL_SetRenderDrawColor(renderer, 140, 0, 0, 255);
-    SDL_RenderClear(renderer);
+static void render() {
 
-    render2D_map();
-    const Uint8* keys = SDL_GetKeyboardState(nullptr);
-    using Player::player;
+  for (int x = 0; x < SCREEN_W; x++) {
+    // Camera space x in [-1, 1]
+    double cameraX = 2.0 * x / double(SCREEN_W) - 1.0;
+    double rayDirX = dirX + planeX * cameraX;
+    double rayDirY = dirY + planeY * cameraX;
 
-   
+    int mapX = int(posX);
+    int mapY = int(posY);
 
-    if (keys[SDL_SCANCODE_W]) {
-        player.move_forward();
-    }
-    if (keys[SDL_SCANCODE_A]) {
-        player.angle -= 0.05f;
-    }
-    if (keys[SDL_SCANCODE_D]) {
-        player.angle += 0.05f;
+    // DDA setup
+    double deltaDistX = (rayDirX == 0) ? 1e30 : std::abs(1.0 / rayDirX);
+    double deltaDistY = (rayDirY == 0) ? 1e30 : std::abs(1.0 / rayDirY);
+
+    int stepX, stepY;
+    double sideDistX, sideDistY;
+
+    if (rayDirX < 0) { stepX = -1; sideDistX = (posX - mapX) * deltaDistX; }
+    else            { stepX =  1; sideDistX = (mapX + 1.0 - posX) * deltaDistX; }
+
+    if (rayDirY < 0) { stepY = -1; sideDistY = (posY - mapY) * deltaDistY; }
+    else            { stepY =  1; sideDistY = (mapY + 1.0 - posY) * deltaDistY; }
+
+    int hit = 0;
+    int side = 0; // 0 = x-side, 1 = y-side
+
+    // DDA loop
+    while (!hit) {
+      if (sideDistX < sideDistY) {
+        sideDistX += deltaDistX;
+        mapX += stepX;
+        side = 0;
+      } else {
+        sideDistY += deltaDistY;
+        mapY += stepY;
+        side = 1;
+      }
+      if (mapX < 0 || mapX >= MAP_W || mapY < 0 || mapY >= MAP_H) { hit = 1; break; }
+      if (worldMap[mapY][mapX] > 0) hit = 1;
     }
 
+    // Perpendicular distance to wall (prevents fish-eye)
+    double perpWallDist;
+
+    if (side == 0) perpWallDist = (sideDistX - deltaDistX);
+    else           perpWallDist = (sideDistY - deltaDistY);
+    zBuffer[x] = perpWallDist;
+
+
+    // Calculate wall slice
+    int lineHeight = int(SCREEN_H / (perpWallDist + 1e-9));
+    int drawStart = -lineHeight / 2 + SCREEN_H / 2;
+    int drawEnd = lineHeight / 2 + SCREEN_H / 2;
+    if (drawStart < 0) drawStart = 0;
+    if (drawEnd >= SCREEN_H) drawEnd = SCREEN_H - 1;
+
+    // Wall hit position for texX
+    double wallX;
+    if (side == 0) wallX = posY + perpWallDist * rayDirY;
+    else           wallX = posX + perpWallDist * rayDirX;
+    wallX -= std::floor(wallX);
+
+    int texX = int(wallX * double(TEX_W));
+    // Flip depending on side and direction so it doesn't mirror weirdly
+    if (side == 0 && rayDirX > 0) texX = TEX_W - texX - 1;
+    if (side == 1 && rayDirY < 0) texX = TEX_W - texX - 1;
+
+    // Pick wall texture by map value
+    const Texture* wallTex;
+
+    int tile = (mapX >= 0 && mapX < MAP_W && mapY >= 0 && mapY < MAP_H) ? worldMap[mapY][mapX] : 1;
     
-    Player::render_ray(player.angle);
-    Player::render_player();
-    Player::render_fov();
+    wallTex = wallTextures[tile-1];
+    //std::cerr << tile <<std::endl; 
+    
+    // Draw ceiling and floor using floor casting
+    // Determine floor wall position (exact hit point in world)
+    double floorXWall, floorYWall;
+    if (side == 0 && rayDirX > 0) { floorXWall = mapX;       floorYWall = mapY + wallX; }
+    else if (side == 0 && rayDirX < 0) { floorXWall = mapX + 1.0; floorYWall = mapY + wallX; }
+    else if (side == 1 && rayDirY > 0) { floorXWall = mapX + wallX; floorYWall = mapY; }
+    else { floorXWall = mapX + wallX; floorYWall = mapY + 1.0; }
 
-    SDL_RenderPresent(renderer);
+    double distWall = perpWallDist;
+    double distPlayer = 0.0;
+
+    // Draw wall slice
+    for (int y = drawStart; y <= drawEnd; y++) {
+      int d = (y * 256) - (SCREEN_H * 128) + (lineHeight * 128);
+      int texY = ((d * TEX_H) / lineHeight) / 256;
+
+      uint32_t c = sampleTex(*wallTex, texX, texY);
+
+      // very simple side shading
+      if (side == 1) {
+        uint8_t a = (c >> 24) & 0xFF;
+        uint8_t r = (c >> 16) & 0xFF;
+        uint8_t g = (c >> 8)  & 0xFF;
+        uint8_t b = (c)       & 0xFF;
+        c = packARGB(a, uint8_t(r * 0.75), uint8_t(g * 0.75), uint8_t(b * 0.75));
+      }
+      putPixel(x, y, c);
+    }
+
+    // Floor/Ceiling casting
+    for (int y = drawEnd + 1; y < SCREEN_H; y++) {
+      // Current distance from player to row
+      double currentDist = SCREEN_H / (2.0 * y - SCREEN_H);
+
+      double weight = (currentDist - distPlayer) / (distWall - distPlayer);
+      double currentFloorX = weight * floorXWall + (1.0 - weight) * posX;
+      double currentFloorY = weight * floorYWall + (1.0 - weight) * posY;
+
+      int floorTexX = int(currentFloorX * TEX_W) & (TEX_W - 1);
+      int floorTexY = int(currentFloorY * TEX_H) & (TEX_H - 1);
+
+      int cellX = int(currentFloorX);
+      int cellY = int(currentFloorY);
+
+      // Safety clamp
+      if (cellX < 0) cellX = 0;
+      if (cellX >= MAP_W) cellX = MAP_W - 1;
+      if (cellY < 0) cellY = 0;
+      if (cellY >= MAP_H) cellY = MAP_H - 1;
+
+      // Get texture indices
+      int floorIndex = floorMap[cellY][cellX];
+      int ceilIndex  = ceilingMap[cellY][cellX];
+
+      // Fetch textures
+      const Texture& floorTex = *floorTextures[floorIndex];
+      const Texture& ceilTex  = *ceilTextures[ceilIndex];
+
+      // Sample
+      uint32_t floorCol = sampleTex(floorTex, floorTexX, floorTexY);
+      uint32_t ceilCol  = sampleTex(ceilTex,  floorTexX, floorTexY);
+
+
+      putPixel(x, y, floorCol);
+      putPixel(x, SCREEN_H - y, ceilCol);
+    }
+  }
+}
+
+
+
+
+
+
+
+  static void update() {
+  const Uint8* keys = SDL_GetKeyboardState(nullptr);
+  // ======================
+  // PLAYER MOVEMENT
+
+  double moveSpeed = 0.06;
+  double rotSpeed  = 0.045;
+
+  if (keys[SDL_SCANCODE_W]) {
+    double nx = posX + dirX * moveSpeed;
+    double ny = posY + dirY * moveSpeed;
+    if (worldMap[int(posY)][int(nx)] == 0) posX = nx;
+    if (worldMap[int(ny)][int(posX)] == 0) posY = ny;
+  }
+  if (keys[SDL_SCANCODE_S]) {
+    double nx = posX - dirX * moveSpeed;
+    double ny = posY - dirY * moveSpeed;
+    if (worldMap[int(posY)][int(nx)] == 0) posX = nx;
+    if (worldMap[int(ny)][int(posX)] == 0) posY = ny;
+  }
+
+  if (keys[SDL_SCANCODE_A]) {
+    double nx = posX - planeX * moveSpeed;
+    double ny = posY - planeY * moveSpeed;
+    if (worldMap[int(posY)][int(nx)] == 0) posX = nx;
+    if (worldMap[int(ny)][int(posX)] == 0) posY = ny;
+  }
+  if (keys[SDL_SCANCODE_D]) {
+    double nx = posX + planeX * moveSpeed;
+    double ny = posY + planeY * moveSpeed;
+    if (worldMap[int(posY)][int(nx)] == 0) posX = nx;
+    if (worldMap[int(ny)][int(posX)] == 0) posY = ny;
+  }
+
+  if (keys[SDL_SCANCODE_LEFT]) {
+    double oldDirX = dirX;
+    dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed);
+    dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed);
+
+    double oldPlaneX = planeX;
+    planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
+    planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
+  }
+  if (keys[SDL_SCANCODE_RIGHT]) {
+    double oldDirX = dirX;
+    dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
+    dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
+
+    double oldPlaneX = planeX;
+    planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
+    planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
+  }
+  render();
+  
+}
+
+static void loop() {
+  SDL_Event e;
+  while (SDL_PollEvent(&e)) {}
+  update();
 }
 
 int main() {
-    SDL_Init(SDL_INIT_VIDEO);
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    std::cerr << "SDL_Init failed: " << SDL_GetError() << "\n";
+    return 1;
+  }
 
-    window = SDL_CreateWindow(
-        "Raycast Prototype",
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        width,
-        height,
-        SDL_WINDOW_SHOWN
-    );
+  if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+    std::cerr << "IMG_Init failed: " << IMG_GetError() << "\n";
+}
 
-    renderer = SDL_CreateRenderer(
-        window,
-        -1,
-        SDL_RENDERER_SOFTWARE
-    );
-    emscripten_set_main_loop(loop, 0, true);
-    return 0;
+
+  gWindow = SDL_CreateWindow(
+    "Raycaster",
+    SDL_WINDOWPOS_CENTERED,
+    SDL_WINDOWPOS_CENTERED,
+    SCREEN_W,
+    SCREEN_H,
+    SDL_WINDOW_SHOWN
+  );
+
+  gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_SOFTWARE);
+
+  gScreenTex = SDL_CreateTexture(
+    gRenderer,
+    SDL_PIXELFORMAT_ARGB8888,
+    SDL_TEXTUREACCESS_STREAMING,
+    SCREEN_W,
+    SCREEN_H
+  );
+
+  // try fo load
+
+  bool ok = true;
+  ok &= loadBMPTexture("tex/wall0.png", texWall0);
+
+  if (!ok) {
+    std::cerr << "Texture load failure\n";
+  }
+
+
+  wallTextures.push_back(&texWall0);
+  
+  emscripten_set_main_loop(loop, 0, true);
+  EM_ASM({
+  function resizeCanvas() {
+    let canvas = Module.canvas;
+
+    let screenW = window.innerWidth;
+    let screenH = window.innerHeight;
+
+    let size = Math.min(screenW, screenH); // keep it as square for now
+
+    canvas.style.width  = size + "px";
+    canvas.style.height = size + "px";
+
+    canvas.style.position = "absolute";
+    canvas.style.left = ((screenW - size) / 2) + "px";
+    canvas.style.top  = ((screenH - size) / 2) + "px";
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+  });
+  return 0;
 }
