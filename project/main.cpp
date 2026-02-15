@@ -26,6 +26,40 @@ int map[MAP_H][MAP_W] = {
     {1,0,0,0,0,0,1},
     {1,1,1,1,1,1,1},
 };
+void render3D_wall_line(float len, int i, int fov, float angle, int x, int y, char win) {
+    float line_w = 1.0f;
+    float vertical_bench = (height /2.0f);
+
+    float length =  30000.0f /abs(len);
+    float extrude = (length/2.0f);
+
+    float shade_factor = 1.0f/abs(len/75);
+    if (shade_factor >=1){
+        shade_factor = 1;
+    }
+
+        
+    SDL_SetRenderDrawColor(renderer, 200*shade_factor, 0, 0, 255);
+
+    //SDL_Rect rect {
+    //                (i*line_w),
+    //                (vertical_bench-extrude),
+    //                (line_w),
+    //                (length)
+    //            };
+    //SDL_RenderFillRect(renderer, &rect);
+    //std::cerr<<extrude<<std::endl;
+    //
+
+    SDL_RenderDrawLine(
+        renderer,
+        i*line_w,
+        vertical_bench-extrude,
+        i*line_w,
+        vertical_bench+extrude
+        );
+        
+    };
 
 void render2D_map() {
     SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);
@@ -262,6 +296,34 @@ namespace Player {
 
         return len;
     }
+
+    void render_fov() {
+        float angle_increment = 0.00156465639;
+        int total_fov = 640;
+        
+        float angle_offset = player.angle - ((total_fov/2) * angle_increment);
+
+        for (int i{}; i < (total_fov); i++){
+            float ray_angle = angle_offset + i * angle_increment;
+            
+            int len1 = len_ray_horizontal(ray_angle);
+            int len2 = len_ray_vertical(ray_angle);
+
+            //std::cerr<<len1<<"  "<<len2<<std::endl;
+            char win;
+            int raw_len{};
+            if (len1 <= len2){
+                raw_len = len1;
+                win = 'h';
+            } else if (len1>len2){
+                raw_len = len2;
+                win = 'v';
+            };
+
+            float corrected = raw_len * cos(ray_angle - player.angle);
+            render3D_wall_line(corrected, i, total_fov, player.angle, player.x, player.y, win);
+        }
+    }
 }    
 
 void loop() {
@@ -290,6 +352,7 @@ void loop() {
     
     Player::render_ray(player.angle);
     Player::render_player();
+    Player::render_fov();
 
     SDL_RenderPresent(renderer);
 }
