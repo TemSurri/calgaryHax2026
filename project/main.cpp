@@ -417,11 +417,19 @@ static Enemy enemy0 {  10.5, 12.0, &texEnemy0, 1};
 static Enemy enemy1 {  10.5, 1.0, &texEnemy1, 1};
 static Enemy enemy2 {  1.5, 12.0, &texEnemy2, 1};
 
-static Enemy chair {  17.5, 20.0, &texC1, 0.6, {
-    &texC1,
-    &texC2,
-    &texC3,
-    &texC4,
+
+
+//chair stuyff
+Texture texS1; // front
+Texture texS2; // front-right
+Texture texS3; // right
+Texture texS4; // back-right
+
+static Enemy chair {  17.5, 20.25, &texS1, 0.6, {
+    &texS1,
+    &texS2,
+    &texS3,
+    &texS4,
   }, 1};
 
 
@@ -446,11 +454,13 @@ static Enemy chair2 {  18.5, 20.0, &texC1, 0.6, {
     &texC4,
   }, 1};
 
+Texture texTN;
+
 static Enemy table2 {  18.5, 20.5, &texC1, 0.6, {
-    &texT1,
-    &texT2,
-    &texT3,
-    &texT4,
+    &texTN,
+    &texTN,
+    &texTN,
+    &texTN,
   }, 1};
 
 
@@ -654,7 +664,7 @@ static void loadMap2Sprites() {
 
   sprites = {
     &enemy0,
-     &chair,
+
     &chair1,
     &chair2,
     &chair3,
@@ -966,7 +976,7 @@ static void initInteractables() {
   Interactable talkStudent;
   talkStudent.x = chair.x;
   talkStudent.y = chair.y;
-  talkStudent.radius = 1.5;
+  talkStudent.radius = 0.5;
   talkStudent.type = InteractType::TALK;
   talkStudent.promptNear = "Press E to talk";
   talkStudent.dialogueText = "Hey...umm.. Mrs. Albert... She wants to see you. She's in the library?";
@@ -1175,7 +1185,7 @@ static void loadMap2Interactables() {
 
     // Sticky Note on Table 
     Interactable note;
-    note.x = 20.5;    
+    note.x = 19.5;    
     note.y = 21.5;
     note.radius = 1.2;
     note.type = InteractType::TALK;
@@ -1559,7 +1569,6 @@ static void update() {
         &person11,
         &person12,
 
-        
     };
 
 
@@ -1650,6 +1659,7 @@ static void update() {
         loadMap(map2);
         loadMap2Sprites();
         loadMap2Interactables();
+        enemy0.speed = 0.5;
         gGlobalDarkness = 0.55f;
 
         posX = 3.0;
@@ -1752,8 +1762,9 @@ int main() {
   ok &= loadBMPTexture("tex/wall5.png", texWall5);
   ok &= loadBMPTexture("tex/wall6.png", texWall6);
   ok &= loadBMPTexture("tex/wall7.png", texWall7);
+  ok &= loadBMPTexture("tex/TN.png", texTN);
 
-  //todo
+
   ok &= loadBMPTexture("tex/wall8.png", texWall8);
   ok &= loadBMPTexture("tex/wall9.png", texWall9);
   ok &= loadBMPTexture("tex/wall10.png", texWall10);
@@ -1763,15 +1774,13 @@ int main() {
   ok &= loadBMPTexture("tex/wall13.png", texWall14);
   ok &= loadBMPTexture("tex/rustdoor.png", texWall15);
 
-  // todo
   ok &= loadBMPTexture("tex/floor0.png", texFloor0);
   ok &= loadBMPTexture("tex/floor1.png", texFloor1);
 
-  // todo
   ok &= loadBMPTexture("tex/ceil0.png", texCeil0);
   ok &= loadBMPTexture("tex/ceil1.png", texCeil1);
 
-  ok &= loadBMPTexture("tex/P3.png", texEnemy0);
+  ok &= loadBMPTexture("tex/E.png", texEnemy0);
 
   ok &= loadBMPTexture("tex/menu.png",  texMenu);
 
@@ -1780,12 +1789,16 @@ int main() {
   ok &= loadBMPTexture("tex/C2.png",  texC3);
   ok &= loadBMPTexture("tex/C3.png",  texC4);
 
+   ok &= loadBMPTexture("tex/P1.png",  texS1);
+  ok &= loadBMPTexture("tex/P11.png",  texS2);
+  ok &= loadBMPTexture("tex/P12.png",  texS3);
+  ok &= loadBMPTexture("tex/P13.png",  texS4);
+
   ok &= loadBMPTexture("tex/T0.png",  texT1);
   ok &= loadBMPTexture("tex/T1.png",  texT2);
   ok &= loadBMPTexture("tex/T2.png",  texT3);
   ok &= loadBMPTexture("tex/T3.png",  texT4);
 
-  // npcs
     ok &= loadBMPTexture("tex/P1.png",  texP1);
   ok &= loadBMPTexture("tex/P11.png",  texP11);
   ok &= loadBMPTexture("tex/P12.png",  texP12);
@@ -1807,10 +1820,10 @@ int main() {
   ok &= loadBMPTexture("tex/P43.png",  texP43);
 
   //todo
-    ok &= loadBMPTexture("tex/wall0.png",  texA0);
-  ok &= loadBMPTexture("tex/P41.png",  texA1);
-  ok &= loadBMPTexture("tex/floor0.png",  texA2);
-  ok &= loadBMPTexture("tex/P33.png",  texA3);
+    ok &= loadBMPTexture("tex/A.png",  texA0);
+  ok &= loadBMPTexture("tex/A.png",  texA1);
+  ok &= loadBMPTexture("tex/A.png",  texA2);
+  ok &= loadBMPTexture("tex/A.png",  texA3);
 
 
 
