@@ -68,14 +68,14 @@ static int worldMap1[MAP_H][MAP_W] = {
 {2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,0,0,0,0,0,0,0,2},
 {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
-{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+{2,0,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 
-{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-{2,0,5,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
+{2,0,5,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
 
 {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 {1,2,2,2,2,2,2,2,2,2,0,0,0,2,2,2,2,2,2,0,2,2,2,2},
@@ -83,7 +83,7 @@ static int worldMap1[MAP_H][MAP_W] = {
 {3,0,0,0,0,0,0,0,0,6,0,6,0,6,2,0,0,0,0,0,0,0,0,4},
 {1,0,0,0,0,0,0,0,2,6,0,6,0,6,2,0,0,0,0,0,0,0,0,1},
 
-{1,0,0,0,0,0,0,0,2,6,0,6,0,6,2,0,0,0,0,0,0,0,0,1},
+{1,0,0,0,0,0,0,0,2,6,0,0,0,6,2,0,0,0,0,0,0,0,0,1},
 
 {2,1,1,4,1,4,1,1,1,2,2,2,2,2,2,1,4,1,1,4,1,1,4,2}
 };
@@ -229,6 +229,13 @@ Texture texP22; // right
 Texture texP23; // back-right
 
 
+//mrsalberts light bversion
+Texture texA0; // front
+Texture texA1; // front-right
+Texture texA2; // right
+Texture texA3; // back-right
+
+
 
 static Texture texEnemy1;
 static Texture texEnemy2;
@@ -262,7 +269,9 @@ enum class GameState {
 };
 
 static GameState gState = GameState::MENU;
-
+static bool gDialogueActive = false;
+static bool gMrsAlbertSpawned = false;
+static bool gTalkedToChair = false;
 
 // enemy info
 struct Enemy {
@@ -377,13 +386,6 @@ static Enemy chair8 {  20.5, 19.0, &texC1, 0.6, {
     &texC4,
   }, 1};
 
-static Enemy table {  12.5, 14.0, &texC1, 0.6, {
-    &texT1,
-    &texT2,
-    &texT3,
-    &texT4,
-  }, 1};
-
 
 // ===== TOP LEFT CLASSROOM =====
 
@@ -442,6 +444,69 @@ static Enemy person4 {  12.5, 10.0, &texP4, 0.8, {
     &texP32,
     &texP33,
   }, 1};
+
+  static Enemy person5 {  3.5, 2.0, &texP4, 0.8, {
+    &texP4,
+    &texP41,
+    &texP42,
+    &texP43,
+  }, 0};
+  static Enemy person6 {  5.5, 2.5, &texP1, 0.8, {
+    &texP1,
+    &texP11,
+    &texP12,
+    &texP13,
+  }, 0};
+  static Enemy person7 {  10.5, 4.5, &texP2, 0.8, {
+    &texP2,
+    &texP21,
+    &texP22,
+    &texP23,
+  }, 0};
+  static Enemy person8{   12.5, 4.5, &texP3, 0.4, {
+    &texP3,
+    &texP31,
+    &texP32,
+    &texP33,
+  }, 1};
+
+  static Enemy person9 {  3.5, 2.5, &texP4, 0.8, {
+    &texP4,
+    &texP41,
+    &texP42,
+    &texP43,
+  }, 0};
+  static Enemy person10 {  5.5, 2.5, &texP1, 0.8, {
+    &texP1,
+    &texP11,
+    &texP12,
+    &texP13,
+  }, 0};
+  static Enemy person11 {  3.5, 4.5, &texP2, 0.8, {
+    &texP2,
+    &texP21,
+    &texP22,
+    &texP23,
+  }, 0};
+  static Enemy person12{  5.5, 4.5, &texP3, 0.4, {
+    &texP3,
+    &texP31,
+    &texP32,
+    &texP33,
+  }, 1};
+
+
+
+static Enemy mrsAlbert {
+    5.5, 12.5,      
+    &texA0,          
+    0.9,
+    { &texA0, &texA1, &texA2, &texA3 },
+    0
+};
+
+
+
 
 
 static void pickRandomDirection(Enemy& e) {
@@ -686,7 +751,8 @@ enum class InteractType {
   TOGGLE_WALL_TILE,     // changes worldMap[y][x] (door open/close)
   TOGGLE_FLOOR_TILE,    // changes floorMap
   TOGGLE_CEIL_TILE,     // changes ceilingMap
-  TOGGLE_SPRITE_TEXTURE // swaps a sprite's texture pointer
+  TOGGLE_SPRITE_TEXTURE, // swaps a sprite's texture pointer
+  TALK //dialogue
 };
 
 struct Interactable {
@@ -711,6 +777,8 @@ struct Interactable {
   Texture** spritePtr = nullptr; // pointer-to-pointer so we can swap it
   Texture*  offTex = nullptr;
   Texture*  onTex  = nullptr;
+
+  std::string dialogueText; // for TALK type
 };
 
 
@@ -730,22 +798,26 @@ static void initInteractables() {
   door.isOn = false; // start closed
   interactables.push_back(door);
 
-  // Example: toggle chair texture (swap sprite)
-  Interactable chairSwap;
-  chairSwap.x = chair.x;
-  chairSwap.y = chair.y;
-  chairSwap.radius = 1.2;
-  chairSwap.type = InteractType::TOGGLE_SPRITE_TEXTURE;
-  chairSwap.promptNear = "Press E to change chair";
-  chairSwap.spritePtr = &chair.sprite;
-  chairSwap.offTex = &texC1;
-  chairSwap.onTex  = &texC2;
-  chairSwap.isOn = false;
-  interactables.push_back(chairSwap);
+  Interactable talkStudent;
+  talkStudent.x = chair.x;
+  talkStudent.y = chair.y;
+  talkStudent.radius = 1.5;
+  talkStudent.type = InteractType::TALK;
+  talkStudent.promptNear = "Press E to talk";
+  talkStudent.dialogueText = "Hey...umm.. Mrs. Albert... She wants to see you. She's in the library?";
+  interactables.push_back(talkStudent);
+ 
 }
 
 static int gNearestInteractable = -1;
 static double gNearestDist = 1e9;
+
+static void hidePromptText() {
+  EM_ASM({
+    let el = document.getElementById("gamePrompt");
+    if (el) el.style.opacity = "0";
+  });
+}
 
 static void updateNearestInteractable() {
   gNearestInteractable = -1;
@@ -762,9 +834,42 @@ static void updateNearestInteractable() {
       gNearestInteractable = i;
     }
   }
+  if (gDialogueActive && gNearestInteractable < 0) {
+    gDialogueActive = false;
+    hidePromptText();
+    }
 }
 
 static bool prevE = false;
+
+static void showPromptText(const std::string& msg) {
+  EM_ASM({
+    let text = UTF8ToString($0);
+
+    let el = document.getElementById("gamePrompt");
+
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "gamePrompt";
+      el.style.position = "absolute";
+      el.style.left = "50%";
+      el.style.bottom = "40px";
+      el.style.transform = "translateX(-50%)";
+      el.style.padding = "10px 18px";
+      el.style.background = "rgba(0,0,0,0.65)";
+      el.style.color = "white";
+      el.style.fontFamily = "system-ui, sans-serif";
+      el.style.fontSize = "18px";
+      el.style.borderRadius = "12px";
+      el.style.pointerEvents = "none";
+      el.style.transition = "opacity 0.15s ease";
+      document.body.appendChild(el);
+    }
+
+    el.textContent = text;
+    el.style.opacity = "1";
+  }, msg.c_str());
+}
 
 static void tryInteract(const Uint8* keys) {
   bool eDown = keys[SDL_SCANCODE_E];
@@ -778,7 +883,22 @@ static void tryInteract(const Uint8* keys) {
 
   it.isOn = !it.isOn;
 
+  if (gDialogueActive && ePressed) {
+    gDialogueActive = false;
+    hidePromptText();
+    return;
+  }
+
   switch (it.type) {
+
+    case InteractType::TALK: {
+        gDialogueActive = true;
+        showPromptText(it.dialogueText); 
+        if (!gTalkedToChair) {
+        gTalkedToChair = true;
+    }   
+    } break;
+
     case InteractType::TOGGLE_WALL_TILE: {
       worldMap[it.cellY][it.cellX] = it.isOn ? it.onValue : it.offValue;
     } break;
@@ -810,46 +930,11 @@ static void drawPromptBar(const std::string& msg) {
   for (int y = y0; y < y0 + h; y++)
     for (int x = x0; x < x0 + w; x++)
       putPixel(x, y, bg);
-
-  // If you want actual text without SDL_ttf,
-  // easiest is HTML overlay (Option B below).
-}
-static void showPromptText(const std::string& msg) {
-  EM_ASM({
-    let text = UTF8ToString($0);
-
-    let el = document.getElementById("gamePrompt");
-
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "gamePrompt";
-      el.style.position = "absolute";
-      el.style.left = "50%";
-      el.style.bottom = "40px";
-      el.style.transform = "translateX(-50%)";
-      el.style.padding = "10px 18px";
-      el.style.background = "rgba(0,0,0,0.65)";
-      el.style.color = "white";
-      el.style.fontFamily = "system-ui, sans-serif";
-      el.style.fontSize = "18px";
-      el.style.borderRadius = "12px";
-      el.style.pointerEvents = "none";
-      el.style.transition = "opacity 0.15s ease";
-      document.body.appendChild(el);
-    }
-
-    el.textContent = text;
-    el.style.opacity = "1";
-  }, msg.c_str());
 }
 
-static void hidePromptText() {
-  EM_ASM({
-    let el = document.getElementById("gamePrompt");
-    if (el) el.style.opacity = "0";
-  });
-}
 static void renderPromptIfNeeded() {
+  if (gDialogueActive) return;
+
   if (gNearestInteractable < 0) {
     hidePromptText();
     return;
@@ -1153,10 +1238,25 @@ static void update() {
   updateNearestInteractable();
   tryInteract(keys);
 
+  if (gTalkedToChair && !gMrsAlbertSpawned) {
+    sprites.push_back(&mrsAlbert);
+    gMrsAlbertSpawned = true;
+  }
+
   updateWander(person1);
   updateWander(person2);
   updateWander(person3);
   updateWander(person4);
+
+  updateWander(person5);
+  updateWander(person6);
+  updateWander(person7);
+  updateWander(person8);
+
+  updateWander(person9);
+  updateWander(person10);
+  updateWander(person11);
+  updateWander(person12);
 
   render();
   
@@ -1241,21 +1341,25 @@ int main() {
   ok &= loadBMPTexture("tex/P12.png",  texP12);
   ok &= loadBMPTexture("tex/P13.png",  texP13);
 
-    ok &= loadBMPTexture("tex/T0.png",  texP2);
-  ok &= loadBMPTexture("tex/T1.png",  texP21);
-  ok &= loadBMPTexture("tex/T2.png",  texP22);
-  ok &= loadBMPTexture("tex/T3.png",  texP23);
+    ok &= loadBMPTexture("tex/P2.png",  texP2);
+  ok &= loadBMPTexture("tex/P21.png",  texP21);
+  ok &= loadBMPTexture("tex/P22.png",  texP22);
+  ok &= loadBMPTexture("tex/P23.png",  texP23);
 
-    ok &= loadBMPTexture("tex/T0.png",  texP3);
-  ok &= loadBMPTexture("tex/T1.png",  texP31);
-  ok &= loadBMPTexture("tex/T2.png",  texP32);
-  ok &= loadBMPTexture("tex/T3.png",  texP33);
+    ok &= loadBMPTexture("tex/P3.png",  texP3);
+  ok &= loadBMPTexture("tex/P31.png",  texP31);
+  ok &= loadBMPTexture("tex/P32.png",  texP32);
+  ok &= loadBMPTexture("tex/P33.png",  texP33);
 
-    ok &= loadBMPTexture("tex/T0.png",  texP4);
-  ok &= loadBMPTexture("tex/T1.png",  texP41);
-  ok &= loadBMPTexture("tex/T2.png",  texP42);
-  ok &= loadBMPTexture("tex/T3.png",  texP43);
+    ok &= loadBMPTexture("tex/P4.png",  texP4);
+  ok &= loadBMPTexture("tex/P41.png",  texP41);
+  ok &= loadBMPTexture("tex/P42.png",  texP42);
+  ok &= loadBMPTexture("tex/P43.png",  texP43);
 
+    ok &= loadBMPTexture("tex/wall0.png",  texA0);
+  ok &= loadBMPTexture("tex/P41.png",  texA1);
+  ok &= loadBMPTexture("tex/floor0.png",  texA2);
+  ok &= loadBMPTexture("tex/P33.png",  texA3);
 
 
 
@@ -1292,7 +1396,6 @@ int main() {
     &chair6,
     &chair7,
     &chair8,
-    &table,
     &table1,
     &table2,
     &table3,
@@ -1313,7 +1416,16 @@ int main() {
      &person2,
       &person3,
        &person4,
+    &person5,
+     &person6,
+      &person7,
+       &person8,
+    &person9,
+     &person10,
+      &person11,
+       &person12,
 
+    
   };
 
 
