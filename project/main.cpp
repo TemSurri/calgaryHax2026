@@ -273,6 +273,11 @@ static bool gDialogueActive = false;
 static bool gMrsAlbertSpawned = false;
 static bool gTalkedToChair = false;
 
+static bool gFading = false;
+static bool gFadeIn = false;
+static float gFadeAlpha = 0.0f;
+static GameState gNextState = GameState::SCHOOL2;
+
 // enemy info
 struct Enemy {
   double x;
@@ -752,7 +757,8 @@ enum class InteractType {
   TOGGLE_FLOOR_TILE,    // changes floorMap
   TOGGLE_CEIL_TILE,     // changes ceilingMap
   TOGGLE_SPRITE_TEXTURE, // swaps a sprite's texture pointer
-  TALK //dialogue
+  TALK, //dialogue
+  TALK_TRANSITION //dialgogue and then change map
 };
 
 struct Interactable {
@@ -806,6 +812,16 @@ static void initInteractables() {
   talkStudent.promptNear = "Press E to talk";
   talkStudent.dialogueText = "Hey...umm.. Mrs. Albert... She wants to see you. She's in the library?";
   interactables.push_back(talkStudent);
+
+
+  Interactable talkAlbert;
+  talkAlbert.x = mrsAlbert.x;
+  talkAlbert.y = mrsAlbert.y;
+  talkAlbert.radius = 1.5;
+  talkAlbert.type = InteractType::TALK_TRANSITION;
+  talkAlbert.promptNear = "Press E to talk";
+  talkAlbert.dialogueText = "You finally came. Close your eyes...";
+  interactables.push_back(talkAlbert);
  
 }
 
@@ -823,8 +839,11 @@ static void updateNearestInteractable() {
   gNearestInteractable = -1;
   gNearestDist = 1e9;
 
+
   for (int i = 0; i < (int)interactables.size(); i++) {
     auto& it = interactables[i];
+    if (it.type == InteractType::TALK_TRANSITION && !gMrsAlbertSpawned)
+    continue;
     double dx = it.x - posX;
     double dy = it.y - posY;
     double dist = std::sqrt(dx*dx + dy*dy);
@@ -841,6 +860,7 @@ static void updateNearestInteractable() {
 }
 
 static bool prevE = false;
+static float gFadeHoldTimer = 0.0f;
 
 static void showPromptText(const std::string& msg) {
   EM_ASM({
@@ -881,23 +901,41 @@ static void tryInteract(const Uint8* keys) {
 
   auto& it = interactables[gNearestInteractable];
 
-  it.isOn = !it.isOn;
+  if (it.type == InteractType::TALK_TRANSITION && !gMrsAlbertSpawned)
+      return;
 
-  if (gDialogueActive && ePressed) {
-    gDialogueActive = false;
-    hidePromptText();
-    return;
-  }
+  it.isOn = !it.isOn;
 
   switch (it.type) {
 
     case InteractType::TALK: {
+
+        if (gDialogueActive) {
+            gDialogueActive = false;
+            hidePromptText();
+            return;
+        }
+
         gDialogueActive = true;
-        showPromptText(it.dialogueText); 
-        if (!gTalkedToChair) {
+        showPromptText(it.dialogueText);
         gTalkedToChair = true;
-    }   
+
     } break;
+
+    case InteractType::TALK_TRANSITION: {
+
+        if (gDialogueActive) {
+            gDialogueActive = false;
+            hidePromptText();
+            gFading = true;   
+            return;
+        }
+
+        gDialogueActive = true;
+        showPromptText(it.dialogueText);
+
+    } break;
+        
 
     case InteractType::TOGGLE_WALL_TILE: {
       worldMap[it.cellY][it.cellX] = it.isOn ? it.onValue : it.offValue;
@@ -1116,6 +1154,30 @@ static void render() {
   }
 
   renderPromptIfNeeded();
+
+  // ===== Proper fade overlay =====
+    if (gFadeAlpha > 0.0f) {
+
+        float alpha = std::clamp(gFadeAlpha, 0.0f, 1.0f);
+
+        for (int i = 0; i < SCREEN_W * SCREEN_H; i++) {
+
+            uint32_t c = gFrame[i];
+
+            uint8_t a = (c >> 24) & 0xFF;
+            uint8_t r = (c >> 16) & 0xFF;
+            uint8_t g = (c >> 8)  & 0xFF;
+            uint8_t b = (c)       & 0xFF;
+
+            // Blend toward black
+            r = uint8_t(r * (1.0f - alpha));
+            g = uint8_t(g * (1.0f - alpha));
+            b = uint8_t(b * (1.0f - alpha));
+
+            gFrame[i] = packARGB(a, r, g, b);
+        }
+    }
+
   SDL_UpdateTexture(gScreenTex, nullptr, gFrame.data(), SCREEN_W * int(sizeof(uint32_t)));
   SDL_RenderClear(gRenderer);
   SDL_RenderCopy(gRenderer, gScreenTex, nullptr, nullptr);
@@ -1144,6 +1206,7 @@ static void renderMenu() {
   SDL_UpdateTexture(gScreenTex, nullptr, gFrame.data(), SCREEN_W * sizeof(uint32_t));
   SDL_RenderClear(gRenderer);
   SDL_RenderCopy(gRenderer, gScreenTex, nullptr, nullptr);
+
   SDL_RenderPresent(gRenderer);
 }
 
@@ -1242,6 +1305,43 @@ static void update() {
     sprites.push_back(&mrsAlbert);
     gMrsAlbertSpawned = true;
   }
+
+  // Fade logic
+  if (gFading) {
+    gFadeAlpha += 0.02f;
+
+    if (gFadeAlpha >= 1.0f) {
+        gFadeAlpha = 1.0f;
+        gFading = false;
+
+        // Load new map
+        loadMap(map1);
+        posX = 3.0;
+        posY = 3.0;
+        dirX = -1.0;
+        dirY = 0.0;
+        planeX = 0.0;
+        planeY = 0.66;
+
+        gFadeHoldTimer = 0.5f;  // stay black for 0.5 seconds
+    }
+  }
+
+  if (gFadeHoldTimer > 0.0f) {
+    gFadeHoldTimer -= 0.016f; 
+
+    if (gFadeHoldTimer <= 0.0f) {
+        gFadeIn = true;
+    }
+  }
+  if (gFadeIn) {
+    gFadeAlpha -= 0.02f;
+
+    if (gFadeAlpha <= 0.0f) {
+        gFadeAlpha = 0.0f;
+        gFadeIn = false;
+      }
+  } 
 
   updateWander(person1);
   updateWander(person2);
