@@ -9,15 +9,20 @@
 #include <SDL_image.h>
 
 
-static void playMusic() {
+static void playMusic(const char* path) {
   EM_ASM({
-    if (!Module.music) {
-      Module.music = new Audio("audio/musick.mp3");
-      Module.music.loop = true;
-      Module.music.volume = 0.6;
+    let path = UTF8ToString($0);
+
+    if (Module.music) {
+      Module.music.pause();
+      Module.music.currentTime = 0;
     }
+
+    Module.music = new Audio(path);
+    Module.music.loop = true;
+    Module.music.volume = 0.6;
     Module.music.play();
-  });
+  }, path);
 }
 
 static void stopMusic() {
@@ -142,11 +147,106 @@ static int ceilingMap1[MAP_H][MAP_W] = {
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 };
 
+
+
+static int worldMap2[MAP_H][MAP_W] = {
+{10,10,9,12,9,11,10,10,10,10,9,12,9,11,10,10,9,11,9,16,9,11,9,10},
+
+{10,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,10},
+
+{10,10,10,10,0,10,10,10,10,10,10,0,10,10,10,10,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10},
+{10,0,13,13,13,13,13,13,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10},
+{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10},
+
+{10,0,13,0,0,0,13,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15},
+{10,0,13,0,0,0,13,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15},
+{10,0,13,0,0,0,13,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15},
+{10,0,13,0,0,0,13,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15},
+{10,0,13,0,0,0,13,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15},
+
+{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10},
+{9,10,10,10,10,10,10,10,10,10,0,0,0,10,10,10,10,10,10,0,10,10,10,10},
+{9,0,0,0,0,0,0,0,10,14,0,14,0,14,10,0,0,0,0,0,0,0,0,9},
+{11,0,0,0,0,0,0,0,0,14,0,14,0,14,10,0,0,0,0,0,0,0,0,12},
+{9,0,0,0,0,0,0,0,10,14,0,14,0,14,10,0,0,0,0,0,0,0,0,9},
+
+{9,0,0,0,0,0,0,0,10,14,0,0,0,14,10,0,0,0,0,0,0,0,0,9},
+
+{10,9,9,12,9,12,9,9,9,10,10,10,10,10,10,9,12,9,9,12,9,9,12,10}
+};
+static int floorMap2[MAP_H][MAP_W] = {
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+};
+
+static int ceilingMap2[MAP_H][MAP_W] = {
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+};
+
 static MapData map1 = {
   worldMap1,
   floorMap1,
   ceilingMap1
 };
+
+static MapData map2 = {
+  worldMap2,
+  floorMap2,
+  ceilingMap2
+};
+
+static float gGlobalDarkness = 0.0f; 
 
 static void loadMap(const MapData& m) {
   for (int y = 0; y < MAP_H; y++) {
@@ -186,9 +286,21 @@ static Texture texWall5;
 static Texture texWall6;
 static Texture texWall7;
 
+static Texture texWall8;
+static Texture texWall9;
+static Texture texWall10;
+static Texture texWall11;
+static Texture texWall12;
+static Texture texWall13;
+static Texture texWall14;
+static Texture texWall15;
+
 static Texture texFloor0;
 static Texture texFloor1;
+
 static Texture texCeil0;
+static Texture texCeil1;
+
 static Texture texMenu;
 static Texture texEnemy0;
 
@@ -272,6 +384,8 @@ static GameState gState = GameState::MENU;
 static bool gDialogueActive = false;
 static bool gMrsAlbertSpawned = false;
 static bool gTalkedToChair = false;
+static bool gHasKey = false;
+static bool gReadNote = false;
 
 static bool gFading = false;
 static bool gFadeIn = false;
@@ -510,9 +624,61 @@ static Enemy mrsAlbert {
     0
 };
 
+//sprite loading
 
+static void loadMap1Sprites() {
+  sprites.clear();
 
+  sprites = {
+    &enemy0, &enemy1, &enemy2,
 
+    &chair, &chair1, &chair2, &chair3,
+    &chair4, &chair5, &chair6, &chair7, &chair8,
+
+    &table1, &table2, &table3,
+
+    &tl_table1,&tl_chair1,&tl_table2,&tl_chair2,
+    &tl_table3,&tl_chair3,&tl_table4,&tl_chair4,
+
+    &tr_table1,&tr_chair1,&tr_table2,&tr_chair2,
+    &tr_table3,&tr_chair3,&tr_table4,&tr_chair4,
+
+    &person1,&person2,&person3,&person4,
+    &person5,&person6,&person7,&person8,
+    &person9,&person10,&person11,&person12
+  };
+}
+
+static void loadMap2Sprites() {
+  sprites.clear();
+
+  sprites = {
+    &enemy0,
+     &chair,
+    &chair1,
+    &chair2,
+    &chair3,
+    &chair4,
+    &chair5,
+    &chair6,
+    &chair7,
+    &chair8,
+    &table1,
+    &table2,
+    &table3,
+    // Top left classroom
+&tl_table1, &tl_chair1,
+&tl_table2, &tl_chair2,
+&tl_table3, &tl_chair3,
+&tl_table4, &tl_chair4,
+
+// Top right classroom
+&tr_table1, &tr_chair1,
+&tr_table2, &tr_chair2,
+&tr_table3, &tr_chair3,
+&tr_table4, &tr_chair4,
+  };
+}
 
 static void pickRandomDirection(Enemy& e) {
   double angle = (rand() % 628) / 100.0; // 0 to 6.28
@@ -564,8 +730,14 @@ static void updateEnemy(Enemy& enemy) {
   }
 
   if (dist > 0.001) {
-    enemy.x += (dx / dist) * 0.03;
-    enemy.y += (dy / dist) * 0.03;
+    double nx = enemy.x + (dx / dist) * 0.03;
+    double ny = enemy.y + (dy / dist) * 0.03;
+
+    if (worldMap[int(enemy.y)][int(nx)] == 0)
+        enemy.x = nx;
+
+    if (worldMap[int(ny)][int(enemy.x)] == 0)
+        enemy.y = ny;
   }
 
   //std::cerr << enemy.x << " " << enemy.y << std::endl;
@@ -688,7 +860,6 @@ static void renderEnemyPlaceholder(const Enemy& enemy) {
   int drawStartY;
   int centerY = SCREEN_H / 2;
   if (enemy.verticalPlaneOffset == 1) {
-    std::cerr<<"chid";
     int centerY = SCREEN_H / 2;
 
     drawStartY = centerY;
@@ -703,7 +874,7 @@ static void renderEnemyPlaceholder(const Enemy& enemy) {
 
   };
   if (enemy.verticalPlaneOffset == 0) {
-    std::cerr<<"nigg";
+ 
     drawStartY = -spriteHeight / 2 + planeY;
     drawEndY   =  spriteHeight / 2 + planeY;
 
@@ -791,18 +962,6 @@ struct Interactable {
 static std::vector<Interactable> interactables;
 
 static void initInteractables() {
-  Interactable door;
-  door.x = 0.5;
-  door.y = 8.5;
-  door.radius = 1.2;
-  door.type = InteractType::TOGGLE_WALL_TILE;
-  door.promptNear = "Press E to open/close";
-  door.cellX = 0;
-  door.cellY = 8;
-  door.offValue = 1; // closed door tile (some wall texture index)
-  door.onValue  = 3; // open (empty)
-  door.isOn = false; // start closed
-  interactables.push_back(door);
 
   Interactable talkStudent;
   talkStudent.x = chair.x;
@@ -825,6 +984,8 @@ static void initInteractables() {
  
 }
 
+
+
 static int gNearestInteractable = -1;
 static double gNearestDist = 1e9;
 
@@ -843,6 +1004,10 @@ static void updateNearestInteractable() {
   for (int i = 0; i < (int)interactables.size(); i++) {
     auto& it = interactables[i];
     if (it.type == InteractType::TALK_TRANSITION && !gMrsAlbertSpawned)
+    continue;
+    if (it.dialogueText == "You found a key." && !gReadNote)
+    continue;
+    if ((it.dialogueText == "You found a key." && gHasKey)&& !gDialogueActive)
     continue;
     double dx = it.x - posX;
     double dy = it.y - posY;
@@ -904,16 +1069,48 @@ static void tryInteract(const Uint8* keys) {
   if (it.type == InteractType::TALK_TRANSITION && !gMrsAlbertSpawned)
       return;
 
-  it.isOn = !it.isOn;
+
 
   switch (it.type) {
 
     case InteractType::TALK: {
 
+        if (it.promptNear == "Press E to open door") {
+
+            if (gHasKey) {
+                gDialogueActive = true;  
+                showPromptText("You unlocked the door... You escaped.");
+
+                stopMusic();
+
+                // small delay would be better, but for now:
+                gState = GameState::MENU;
+
+                return;
+            }
+            else {
+                gDialogueActive = true;  
+                showPromptText("It's locked.");
+                return;
+}
+        }
+
         if (gDialogueActive) {
             gDialogueActive = false;
             hidePromptText();
             return;
+        }
+
+        if (it.dialogueText == "U-Haul lockers.") {
+            gReadNote = true;
+        }
+
+        if (it.dialogueText == "You found a key.") {
+            if (gHasKey) {
+                showPromptText("nothing.");
+                return;
+            }
+            gHasKey = true;
         }
 
         gDialogueActive = true;
@@ -937,8 +1134,23 @@ static void tryInteract(const Uint8* keys) {
     } break;
         
 
-    case InteractType::TOGGLE_WALL_TILE: {
-      worldMap[it.cellY][it.cellX] = it.isOn ? it.onValue : it.offValue;
+   case InteractType::TOGGLE_WALL_TILE: {
+
+        if (!gHasKey) {
+            showPromptText("It's locked.");
+            return;
+        }
+
+        it.isOn = !it.isOn;
+
+        if (it.isOn) {
+            worldMap[it.cellY][it.cellX] = 0;
+            showPromptText("Door opened.");
+        } else {
+            worldMap[it.cellY][it.cellX] = 16;
+            showPromptText("Door closed.");
+        }
+
     } break;
 
     case InteractType::TOGGLE_FLOOR_TILE: {
@@ -955,6 +1167,43 @@ static void tryInteract(const Uint8* keys) {
       }
     } break;
   }
+}
+
+static void loadMap2Interactables() {
+    interactables.clear();
+    
+
+    // Sticky Note on Table 
+    Interactable note;
+    note.x = 20.5;    
+    note.y = 21.5;
+    note.radius = 1.2;
+    note.type = InteractType::TALK;
+    note.promptNear = "Press E to read note";
+    note.dialogueText = "U-Haul lockers.";
+    interactables.push_back(note);
+
+
+    // === Locker ===
+    Interactable locker;
+    locker.x = 11.5;   // 
+    locker.y = 19.5;
+    locker.radius = 1.5;
+    locker.type = InteractType::TALK;
+    locker.promptNear = "Press E to search locker";
+    locker.dialogueText = "You found a key.";
+    interactables.push_back(locker);
+
+    Interactable door;
+    door.x = 19.5;   //door position
+    door.y = 1.5;
+    door.radius = 1.5;
+    door.type = InteractType::TALK;
+    door.promptNear = "Press E to open door";
+    door.dialogueText = "The door is locked.";
+    interactables.push_back(door);
+
+
 }
 
 
@@ -1178,6 +1427,27 @@ static void render() {
         }
     }
 
+
+  if (gGlobalDarkness > 0.0f) {
+
+    float alpha = std::clamp(gGlobalDarkness, 0.0f, 1.0f);
+
+    for (int i = 0; i < SCREEN_W * SCREEN_H; i++) {
+
+        uint32_t c = gFrame[i];
+
+        uint8_t a = (c >> 24) & 0xFF;
+        uint8_t r = (c >> 16) & 0xFF;
+        uint8_t g = (c >> 8)  & 0xFF;
+        uint8_t b = (c)       & 0xFF;
+
+        r = uint8_t(r * (1.0f - alpha));
+        g = uint8_t(g * (1.0f - alpha));
+        b = uint8_t(b * (1.0f - alpha));
+
+        gFrame[i] = packARGB(a, r, g, b);
+    }
+  }
   SDL_UpdateTexture(gScreenTex, nullptr, gFrame.data(), SCREEN_W * int(sizeof(uint32_t)));
   SDL_RenderClear(gRenderer);
   SDL_RenderCopy(gRenderer, gScreenTex, nullptr, nullptr);
@@ -1231,8 +1501,68 @@ static void update() {
       enemy1 = { 1.0, 18.0, &texEnemy1, 1};
       enemy2 = { 18.0, 1.0, &texEnemy2, 1 };
 
-      playMusic(); 
+      playMusic("audio/music.mp3"); 
       gState = GameState::PLAYING;
+      interactables.clear();
+      interactables.clear();
+      initInteractables();
+      gGlobalDarkness = 0.0f;
+
+      gDialogueActive = false;
+      gMrsAlbertSpawned = false;
+      gTalkedToChair = false;
+      gHasKey = false;
+      gReadNote = false;
+      
+
+      gFading = false;
+      gFadeIn = false;
+      gFadeAlpha = 0.0f;
+
+      sprites = {
+
+        &chair,
+        &chair1,
+        &chair2,
+        &chair3,
+        &chair4,
+        &chair5,
+        &chair6,
+        &chair7,
+        &chair8,
+        &table1,
+        &table2,
+        &table3,
+        // Top left classroom
+    &tl_table1, &tl_chair1,
+    &tl_table2, &tl_chair2,
+    &tl_table3, &tl_chair3,
+    &tl_table4, &tl_chair4,
+
+    // Top right classroom
+    &tr_table1, &tr_chair1,
+    &tr_table2, &tr_chair2,
+    &tr_table3, &tr_chair3,
+    &tr_table4, &tr_chair4,
+
+
+        &person1,
+        &person2,
+        &person3,
+        &person4,
+        &person5,
+        &person6,
+        &person7,
+        &person8,
+        &person9,
+        &person10,
+        &person11,
+        &person12,
+
+        
+    };
+
+
 
 
     }
@@ -1294,7 +1624,9 @@ static void update() {
 
 
   //updateEnemy(enemy1);
-  //updateEnemy(enemy0);
+  if (worldMap[0][0] == 10) { // crude way we're in map2
+    updateEnemy(enemy0);
+  }
   //updateEnemy(enemy2);
 
 
@@ -1315,7 +1647,11 @@ static void update() {
         gFading = false;
 
         // Load new map
-        loadMap(map1);
+        loadMap(map2);
+        loadMap2Sprites();
+        loadMap2Interactables();
+        gGlobalDarkness = 0.55f;
+
         posX = 3.0;
         posY = 3.0;
         dirX = -1.0;
@@ -1417,12 +1753,26 @@ int main() {
   ok &= loadBMPTexture("tex/wall6.png", texWall6);
   ok &= loadBMPTexture("tex/wall7.png", texWall7);
 
+  //todo
+  ok &= loadBMPTexture("tex/wall8.png", texWall8);
+  ok &= loadBMPTexture("tex/wall9.png", texWall9);
+  ok &= loadBMPTexture("tex/wall10.png", texWall10);
+  ok &= loadBMPTexture("tex/wall11.png", texWall11);
+  ok &= loadBMPTexture("tex/wall4.png", texWall12);
+  ok &= loadBMPTexture("tex/wall13.png", texWall13);
+  ok &= loadBMPTexture("tex/wall13.png", texWall14);
+  ok &= loadBMPTexture("tex/rustdoor.png", texWall15);
 
+  // todo
   ok &= loadBMPTexture("tex/floor0.png", texFloor0);
   ok &= loadBMPTexture("tex/floor1.png", texFloor1);
+
+  // todo
   ok &= loadBMPTexture("tex/ceil0.png", texCeil0);
-  ok &= loadBMPTexture("tex/E0.png", texEnemy0);
-  ok &= loadBMPTexture("tex/E1.png", texEnemy1);
+  ok &= loadBMPTexture("tex/ceil1.png", texCeil1);
+
+  ok &= loadBMPTexture("tex/P3.png", texEnemy0);
+
   ok &= loadBMPTexture("tex/menu.png",  texMenu);
 
   ok &= loadBMPTexture("tex/C0.png",  texC1);
@@ -1456,6 +1806,7 @@ int main() {
   ok &= loadBMPTexture("tex/P42.png",  texP42);
   ok &= loadBMPTexture("tex/P43.png",  texP43);
 
+  //todo
     ok &= loadBMPTexture("tex/wall0.png",  texA0);
   ok &= loadBMPTexture("tex/P41.png",  texA1);
   ok &= loadBMPTexture("tex/floor0.png",  texA2);
@@ -1471,6 +1822,7 @@ int main() {
   floorTextures.push_back(&texFloor1);
   
   ceilTextures.push_back(&texCeil0);
+  ceilTextures.push_back(&texCeil1);
 
   wallTextures.push_back(&texWall0);
   wallTextures.push_back(&texWall1);
@@ -1480,13 +1832,20 @@ int main() {
   wallTextures.push_back(&texWall5);
   wallTextures.push_back(&texWall6);
   wallTextures.push_back(&texWall7);
+
+  wallTextures.push_back(&texWall8);
+  wallTextures.push_back(&texWall9);
+  wallTextures.push_back(&texWall10);
+  wallTextures.push_back(&texWall11);
+  wallTextures.push_back(&texWall12);
+  wallTextures.push_back(&texWall13);
+  wallTextures.push_back(&texWall14);
+  wallTextures.push_back(&texWall15);
   
 
 
   sprites = {
-    &enemy0,
-    &enemy1,
-    &enemy2,
+
     &chair,
     &chair1,
     &chair2,
