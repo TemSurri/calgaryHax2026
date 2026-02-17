@@ -1,5 +1,12 @@
 <img width="442" height="416" alt="Screenshot 2026-02-15 at 8 54 18 AM" src="https://github.com/user-attachments/assets/c914d569-a8bd-4f22-8ce1-1a3de376781b" />
 
+
+You can play it here: https://memorydismissed.vercel.app/
+Use WASD to move, and left and right arrow keys to look around. Unfortunaly I didn't make the game mobile responsive so it can only be played on a computer.
+
+
+
+
 ## Inspiration
 
 The theme **“impermanence”** inspired the idea that places and people from childhood rarely remain the way we remember them. Familiar environments shift over time, and revisiting them can feel unfamiliar or distorted.
